@@ -64,7 +64,7 @@
 <a style="text-decoration: none;"  href="https://developer.mozilla.org/en-US/docs/Web/javascript" target="_blank" rel="noreferrer">
   <img src="https://skillicons.dev/icons?i=js" alt="javascript" width="40" height="40"/>
 &#x200B;</a>&nbsp;
-<a style="text-decoration: none;"  href="https://microsoft.com" target="_blank" rel="noreferrer">
+<a style="text-decoration: none;"  href="https://www.microsoft.com/de-de/windows" target="_blank" rel="noreferrer">
     <img src="https://skillicons.dev/icons?i=windows" alt="Windows" width="40" height="40"/>
 &#x200B;</a>&nbsp;
 <a style="text-decoration: none;"  href="https://www.kernel.org/" target="_blank" rel="noreferrer"> 
