@@ -31,7 +31,7 @@ SecureOS: https://github.com/EngineGames-Development/SecureOS.
 # 📂 Featured Repositories
 
 *   **[SecureOS]([link](https://github.com/EngineGames-Development/SecureOS))** – *Bare-metal (toy) operating system using Grub2 as Bootloader, C for the basic drivers and Rust for harder tasks*
-*   **[Repository-Name-2]([link](https://github.com/EngineGames-Development/Hybrid-Entropy-Computing-Platform))** – A hardware/software system using optical entropy generation for randomness. Arduino C++, Python.
+*   **[Hybrid-Entropy-Computing-Platform]([link](https://github.com/EngineGames-Development/Hybrid-Entropy-Computing-Platform))** – A hardware/software system using optical entropy generation for randomness. C++, Python.
 *   **[Engine-s-Antivirus]([link](https://github.com/EngineGames-Development/Engine-s-Antivirus))** – A toy operating system using Python and Rust*
 
 ---
