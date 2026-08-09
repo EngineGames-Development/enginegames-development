@@ -37,7 +37,7 @@
 
 
 <p align="left">
-<a style="text-decoration: none;" href="https://wikipedia.org" target="_blank" rel="noreferrer">
+<a style="text-decoration: none;" href="https://www.c-language.org/" target="_blank" rel="noreferrer">
   <img src="https://skillicons.dev/icons?i=c" alt="C" width="40" height="40"/>
 &#x200B;</a>&nbsp;
 <a style="text-decoration: none;" href="https://isocpp.org" target="_blank" rel="noreferrer">
@@ -55,10 +55,10 @@
 <a style="text-decoration: none;"  href="https://docker.com" target="_blank" rel="noreferrer">
   <img src="https://skillicons.dev/icons?i=docker" alt="Docker" width="40" height="40"/>
 &#x200B;</a>&nbsp;
-<a style="text-decoration: none;"  href="https://developer.mozilla.org/en-US/docs/Web/arduino" target="_blank" rel="noreferrer"> 
+<a style="text-decoration: none;"  href="https://www.arduino.cc/" target="_blank" rel="noreferrer"> 
   <img src="https://skillicons.dev/icons?i=arduino" alt="arduino" width="40" height="40"/>
 &#x200B;</a>&nbsp;
-<a style="text-decoration: none;"  href="https://developer.mozilla.org/en-US/docs/Web/html5" target="_blank" rel="noreferrer"> 
+<a style="text-decoration: none;"  href="https://developer.mozilla.org/en-US/docs/Web/HTML" target="_blank" rel="noreferrer"> 
   <img src="https://skillicons.dev/icons?i=html" alt="html5" width="40" height="40">
 &#x200B;</a>&nbsp;
 <a style="text-decoration: none;"  href="https://developer.mozilla.org/en-US/docs/Web/javascript" target="_blank" rel="noreferrer">
@@ -67,25 +67,25 @@
 <a style="text-decoration: none;"  href="https://microsoft.com" target="_blank" rel="noreferrer">
     <img src="https://skillicons.dev/icons?i=windows" alt="Windows" width="40" height="40"/>
 &#x200B;</a>&nbsp;
-<a style="text-decoration: none;"  href="https://developer.mozilla.org/en-US/docs/Web/linux" target="_blank" rel="noreferrer"> 
+<a style="text-decoration: none;"  href="https://www.kernel.org/" target="_blank" rel="noreferrer"> 
   <img src="https://skillicons.dev/icons?i=linux" alt="linux" width="40" height="40"/>
 &#x200B;</a>&nbsp;
-<a style="text-decoration: none;"  href="https://developer.mozilla.org/en-US/docs/Web/mysql" target="_blank" rel="noreferrer"> 
+<a style="text-decoration: none;"  href="https://www.mysql.com/" target="_blank" rel="noreferrer"> 
   <img src="https://skillicons.dev/icons?i=mysql" alt="mysql" width="40" height="40"/>
 &#x200B;</a>&nbsp;
 <a style="text-decoration: none;"  href="https://mongodb.com" target="_blank" rel="noreferrer">
     <img src="https://skillicons.dev/icons?i=mongodb" alt="MongoDB" width="40" height="40"/>
 &#x200B;</a>&nbsp;
-<a style="text-decoration: none;"  href="https://developer.mozilla.org/en-US/docs/Web/nodejs" target="_blank" rel="noreferrer"> 
+<a style="text-decoration: none;"  href="https://nodejs.org" target="_blank" rel="noreferrer"> 
   <img src="https://skillicons.dev/icons?i=nodejs" alt="nodejs" width="40" height="40"/>
 &#x200B;</a>&nbsp;
-<a style="text-decoration: none;"  href="https://developer.mozilla.org/en-US/docs/Web/php" target="_blank" rel="noreferrer"> 
+<a style="text-decoration: none;"  href="https://www.php.net/" target="_blank" rel="noreferrer"> 
   <img src="https://skillicons.dev/icons?i=php" alt="php" width="40" height="40"/>
 &#x200B;</a>&nbsp;
-<a style="text-decoration: none;"  href="https://developer.mozilla.org/en-US/docs/Web/python" target="_blank" rel="noreferrer"> 
+<a style="text-decoration: none;"  href="https://www.python.org/" target="_blank" rel="noreferrer"> 
   <img src="https://skillicons.dev/icons?i=py" alt="python" width="40" height="40"/>
 &#x200B;</a>&nbsp;
-<a style="text-decoration: none;"  href="https://developer.mozilla.org/en-US/docs/Web/unity" target="_blank" rel="noreferrer"> 
+<a style="text-decoration: none;"  href="https://unity.com/" target="_blank" rel="noreferrer"> 
   <img src="https://skillicons.dev/icons?i=unity" alt="unity" width="40" height="40"/>
 &#x200B;</a></p>
 <p align="center">
