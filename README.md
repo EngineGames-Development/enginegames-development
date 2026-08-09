@@ -6,7 +6,7 @@ I started as a Roblox/Game developer, however one day I started getting interest
 ---
 
 ### 🚀 Core Engineering Pillars
-*   **💻⚙️🗄️ Fullstack: ** Building full web applications. Coming up.
+*   **💻⚙️🗄️ Fullstack:** Building full web applications. Coming up.
 *   **💻 Operating Systems & Low-Level:** Building my own OS, Bootloader, Kernel, drivers, x86 assembly, C/++, Rust, etc.
 *   **🛡️ Cybersecurity & Reverse Engineering:** Reverse Engineering with Ghidra/Ida Pro and other tools. Wireshark,nmap etc. Own Antivirus: https://github.com/EngineGames-Development/Engine-s-Antivirus
 *   **🧠 AI & Embedded Systems:** I love building projects with Arduino and Raspberry Pi. Also including AI. Entropy/Quantum: https://github.com/EngineGames-Development/Hybrid-Entropy-Computing-Platform
