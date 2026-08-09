@@ -1,5 +1,7 @@
 # 🎮 EngineGames Development ⚙️
 "Look, if you had one shot or one opportunity to seize everything you ever wanted in one moment, would you capture it, or just let it slip?"
+
+---
 # 👋 Introduction
  I started as a Roblox/Game developer, however one day I started getting interested in the fields Fullstack,CyberSecurity,OS,AI and Embedded Systems. I also have a passion for Low Level programming that started especially by building my own Operating System.  SecureOS: https://github.com/EngineGames-Development/SecureOS.
  
