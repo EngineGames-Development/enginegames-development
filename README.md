@@ -76,7 +76,7 @@ SecureOS: https://github.com/EngineGames-Development/SecureOS.
 <a style="text-decoration: none;"  href="https://developer.mozilla.org/en-US/docs/Web/mysql" target="_blank" rel="noreferrer"> 
   <img src="https://skillicons.dev/icons?i=mysql" alt="mysql" width="40" height="40"/>
 &#x200B;</a>&nbsp;
-<a style="text-decoration: none;gap:5px;"  href="https://mongodb.com" target="_blank" rel="noreferrer">
+<a style="text-decoration: none;"  href="https://mongodb.com" target="_blank" rel="noreferrer">
     <img src="https://skillicons.dev/icons?i=mongodb" alt="MongoDB" width="40" height="40"/>
 &#x200B;</a>&nbsp;
 <a style="text-decoration: none;"  href="https://developer.mozilla.org/en-US/docs/Web/nodejs" target="_blank" rel="noreferrer"> 
@@ -92,9 +92,9 @@ SecureOS: https://github.com/EngineGames-Development/SecureOS.
   <img src="https://skillicons.dev/icons?i=unity" alt="unity" width="40" height="40"/>
 &#x200B;</a></p>
 <p align="left">
-  <img src="https://github-stats-extended.vercel.app/api?username=EngineGames-Development&show_icons=true&locale=en" alt="GitHub Stats" height="480" />
-  <img src="https://github-readme-streak-stats.herokuapp.com/?user=EngineGames-Development&" alt="EngineGames-Development" height="480" />
-  <img src="https://github-stats-extended.vercel.app/api/top-langs?username=EngineGames-Development&show_icons=true&locale=en" alt="Top Languages" height="480" />
+  <img src="https://github-stats-extended.vercel.app/api?username=EngineGames-Development&show_icons=true&locale=en&theme=tokyonight" alt="GitHub Stats" height="480" />
+  <img src="https://github-readme-streak-stats.herokuapp.com/?user=EngineGames-Development&theme=tokyonight" alt="EngineGames-Development" height="480" />
+  <img src="https://github-stats-extended.vercel.app/api/top-langs?username=EngineGames-Development&show_icons=true&locale=en&theme=tokyonight&layout=compact" alt="Top Languages" height="480" />
 </p>
 
 ---
