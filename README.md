@@ -91,11 +91,11 @@ SecureOS: https://github.com/EngineGames-Development/SecureOS.
 <a style="text-decoration: none;"  href="https://developer.mozilla.org/en-US/docs/Web/unity" target="_blank" rel="noreferrer"> 
   <img src="https://skillicons.dev/icons?i=unity" alt="unity" width="40" height="40"/>
 &#x200B;</a></p>
-<p align="left">
-  <img src="https://github-stats-extended.vercel.app/api?username=EngineGames-Development&show_icons=true&locale=en&theme=tokyonight" alt="GitHub Stats" height="480" />
-  <img src="https://github-readme-streak-stats.herokuapp.com/?user=EngineGames-Development&theme=tokyonight" alt="EngineGames-Development" height="480" />
+<p align="center">
+  <img src="https://github-stats-extended.vercel.app/api?username=EngineGames-Development&show_icons=true&locale=en&theme=tokyonight" alt="GitHub Stats" height="195" />
+  <img src="https://github-readme-streak-stats.herokuapp.com/?user=EngineGames-Development&theme=tokyonight" alt="EngineGames-Development" height="195" />
   <br>
-  <img src="https://github-stats-extended.vercel.app/api/top-langs?username=EngineGames-Development&show_icons=true&locale=en&theme=tokyonight" alt="Top Languages" height="480" />
+  <img src="https://github-stats-extended.vercel.app/api/top-langs?username=EngineGames-Development&show_icons=true&locale=en&theme=tokyonight" alt="Top Languages" width="450" />
 </p>
 
 ---
