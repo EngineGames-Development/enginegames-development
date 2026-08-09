@@ -3,7 +3,7 @@
 
 ---
 # 👋 Introduction
- I started as a Roblox/Game developer, however one day I started getting interested in the fields Fullstack,CyberSecurity,OS,AI and Embedded Systems. I also have a passion for Low Level programming that started especially by building my own Operating System.  SecureOS: https://github.com/EngineGames-Development/SecureOS.
+ I started as a Roblox/Game developer, however one day I started getting interested in the fields Fullstack,CyberSecurity,OS,AI and Embedded Systems. I also have a passion for Low Level programming that started especially  by building my own Operating System.  SecureOS: https://github.com/EngineGames-Development/SecureOS.
  
 ---
 # 🚀 Core Engineering Pillars
@@ -29,7 +29,7 @@
 
 *   **[SecureOS]([link](https://github.com/EngineGames-Development/SecureOS))** – *Bare-metal (toy) operating system using Grub2 as Bootloader, C for the basic drivers and Rust for harder tasks*
 *   **[Hybrid-Entropy-Computing-Platform]([link](https://github.com/EngineGames-Development/Hybrid-Entropy-Computing-Platform))** – A hardware/software system using optical entropy generation for randomness. C++, Python.
-*   **[Engine-s-Antivirus]([link](https://github.com/EngineGames-Development/Engine-s-Antivirus))** – A toy operating system using Python and Rust*
+*   **[Engine-s-Antivirus]([link](https://github.com/EngineGames-Development/Engine-s-Antivirus))** – A (toy) antivirus using Python and Rust.
 
 ---
 
@@ -101,5 +101,5 @@
 ---
 
 # 🤝 Connect & Collaborate
-I am always open to collaborate with others doing .
+I am always open to collaborate with others!
 *   **Contact:** [EngineGames-Development@web.de]
