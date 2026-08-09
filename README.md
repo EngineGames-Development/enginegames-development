@@ -61,6 +61,9 @@
 <a style="text-decoration: none;"  href="https://developer.mozilla.org/en-US/docs/Web/HTML" target="_blank" rel="noreferrer"> 
   <img src="https://skillicons.dev/icons?i=html" alt="html5" width="40" height="40">
 &#x200B;</a>&nbsp;
+<a style="text-decoration: none;"  href="https://developer.mozilla.org/en-US/docs/Web/CSS" target="_blank" rel="noreferrer"> 
+  <img src="https://skillicons.dev/icons?i=css" alt="css3" width="40" height="40">
+&#x200B;</a>&nbsp;
 <a style="text-decoration: none;"  href="https://developer.mozilla.org/en-US/docs/Web/javascript" target="_blank" rel="noreferrer">
   <img src="https://skillicons.dev/icons?i=js" alt="javascript" width="40" height="40"/>
 &#x200B;</a>&nbsp;
