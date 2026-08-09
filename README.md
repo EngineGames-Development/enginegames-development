@@ -92,9 +92,9 @@ SecureOS: https://github.com/EngineGames-Development/SecureOS.
   <img src="https://skillicons.dev/icons?i=unity" alt="unity" width="40" height="40"/>
 &#x200B;</a></p>
 <p align="left">
-  <img src="https://github-stats-extended.vercel.app/api?username=EngineGames-Development&show_icons=true&locale=en" alt="GitHub Stats" />
-  <img src="https://github-readme-streak-stats.herokuapp.com/?user=EngineGames-Development&" alt="EngineGames-Development" />
-  <img src="https://github-stats-extended.vercel.app/api/top-langs?username=EngineGames-Development&show_icons=true&locale=en" alt="Top Languages" />
+  <img src="https://github-stats-extended.vercel.app/api?username=EngineGames-Development&show_icons=true&locale=en" alt="GitHub Stats" height="750" />
+  <img src="https://github-readme-streak-stats.herokuapp.com/?user=EngineGames-Development&" alt="EngineGames-Development" height="750" />
+  <img src="https://github-stats-extended.vercel.app/api/top-langs?username=EngineGames-Development&show_icons=true&locale=en" alt="Top Languages" height="480" />
 </p>
 
 ---
