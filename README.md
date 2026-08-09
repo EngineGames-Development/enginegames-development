@@ -95,7 +95,7 @@ SecureOS: https://github.com/EngineGames-Development/SecureOS.
   <img src="https://github-stats-extended.vercel.app/api?username=EngineGames-Development&show_icons=true&locale=en&theme=tokyonight" alt="GitHub Stats" height="480" />
   <img src="https://github-readme-streak-stats.herokuapp.com/?user=EngineGames-Development&theme=tokyonight" alt="EngineGames-Development" height="480" />
   <br>
-  <img src="https://github-stats-extended.vercel.app/api/top-langs?username=EngineGames-Development&show_icons=true&locale=en&theme=tokyonight&layout=compact" alt="Top Languages" height="480" />
+  <img src="https://github-stats-extended.vercel.app/api/top-langs?username=EngineGames-Development&show_icons=true&locale=en&theme=tokyonight" alt="Top Languages" height="480" />
 </p>
 
 ---
