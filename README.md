@@ -3,12 +3,12 @@
 
 ---
 # 👋 Introduction
- I started as a Roblox/Game developer, however one day I started getting interested in the fields Fullstack,CyberSecurity,OS,AI and Embedded Systems. I also have a passion for Low Level programming that started especially  by building my own Operating System.  SecureOS: https://github.com/EngineGames-Development/SecureOS.
+ I started as a Roblox/Game developer, however one day I started getting interested in the fields Fullstack,CyberSecurity,OS,AI and Embedded Systems. I also have a passion for Low Level programming that started especially  by starting building my own Operating System in Rust.  SecureOS: https://github.com/EngineGames-Development/SecureRustOS.
  
 ---
 # 🚀 Core Engineering Pillars
 *   **💻⚙️🗄️ Fullstack:** Building full web applications. Coming up
-*   **💻 Operating Systems & Low-Level:** Building my own OS, (Bootloader), Kernel, drivers, x86 assembly, C/++, Rust, etc. Own OS: https://github.com/EngineGames-Development/SecureOS
+*   **💻 Operating Systems & Low-Level:** Building my own OS, (Bootloader), Kernel, drivers, x86 assembly, C/++, Rust, etc. Own OS: https://github.com/EngineGames-Development/SecureRustOS
 *   **🛡️ Cybersecurity & Reverse Engineering:** Reverse Engineering with Ghidra/Ida Pro and other tools. Wireshark,Nmap etc. Own Antivirus: https://github.com/EngineGames-Development/Engine-s-Antivirus
 *   **🧠 AI & Embedded Systems:** I love building projects with Arduino and Raspberry Pi. Also including AI. Entropy/Quantum: https://github.com/EngineGames-Development/Hybrid-Entropy-Computing-Platform
 ---
@@ -27,7 +27,7 @@
 
 # 📂 Featured Repositories
 
-*   **[SecureOS]([link](https://github.com/EngineGames-Development/SecureOS))** – Bare-metal educational operating system using Grub2 as Bootloader, C for the basic drivers and Rust for harder tasks.
+*   **[SecureOS]([link](https://github.com/EngineGames-Development/SecureOS](https://github.com/EngineGames-Development/SecureRustOS)))** – Bare-metal educational operating system in Rust(work in progress).
 *   **[Hybrid-Entropy-Computing-Platform]([link](https://github.com/EngineGames-Development/Hybrid-Entropy-Computing-Platform))** – A hardware/software system using optical entropy generation for randomness. C++, Python.
 *   **[Engine-s-Antivirus]([link](https://github.com/EngineGames-Development/Engine-s-Antivirus))** – A educational antivirus using Python and Rust.
 
