@@ -7,10 +7,10 @@
  
 ---
 # 🚀 Core Engineering Pillars
-*   **💻⚙️🗄️ Fullstack:** Building full web applications. Coming up
-*   **💻 Operating Systems & Low-Level:** Building my own OS, (Bootloader), Kernel, drivers, x86 assembly, C/++, Rust, etc. Own OS: https://github.com/EngineGames-Development/SecureRustOS
-*   **🛡️ Cybersecurity & Reverse Engineering:** Reverse Engineering with Ghidra/Ida Pro and other tools. Wireshark,Nmap etc. Own Antivirus: https://github.com/EngineGames-Development/Engine-s-Antivirus
-*   **🧠 AI & Embedded Systems:** I love building projects with Arduino and Raspberry Pi. Also including AI. Entropy/Quantum: https://github.com/EngineGames-Development/Hybrid-Entropy-Computing-Platform
+*   **💻⚙️🗄️ Fullstack:** Building my own Password Manager(work in progress): [EngineManager](https://github.com/EngineGames-Development/EngineManager)
+*   **💻 Operating Systems & Low-Level:** Building my own OS, (Bootloader), Kernel, drivers, x86 assembly, C/++, Rust, etc. Old Discontinued OS: [OS,Discontinued](https://github.com/EngineGames-Development/SecureOS) New OS(Coming up) : [SecureRustOS](https://github.com/EngineGames-Development/SecureRustOS)
+*   **🛡️ Cybersecurity & Reverse Engineering:** Reverse Engineering with Ghidra/Ida Pro and other tools. Wireshark,Nmap etc. Own Antivirus: [Toy Antivirus](https://github.com/EngineGames-Development/Engine-s-Antivirus)
+*   **🧠 AI & Embedded Systems:** I love building projects with Arduino and Raspberry Pi. Also including AI. Entropy/Quantum: [Entropy](https://github.com/EngineGames-Development/Hybrid-Entropy-Computing-Platform)
 ---
 #  🛠️ The Tech Stack
 
@@ -21,7 +21,7 @@
 | **Databases** | `MySQL`, `MongoDB` |
 | **Graphics & Hardware** | `Vulkan(Coming up)` |
 | **Platforms & Systems** | `Linux`, `Windows` |
-| **Embedded Systems** |  `Raspberry Pi`, `Arduino`, `STM32`, `ESP32`,|
+| **Embedded Systems** |  `Raspberry Pi`, `Arduino`|
 
 ---
 
