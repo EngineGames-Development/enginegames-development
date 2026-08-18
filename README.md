@@ -3,7 +3,7 @@
 
 ---
 # 👋 Introduction
- I started as a Roblox/Game developer, however one day I started getting interested in the fields Fullstack,CyberSecurity,OS,AI and Embedded Systems. I also have a passion for Low Level programming that started especially  by starting building my own Operating System in Rust.  SecureOS: https://github.com/EngineGames-Development/SecureRustOS.
+ I started as a Roblox/Game developer, however one day I started getting interested in the fields Fullstack,CyberSecurity,OS,AI and Embedded Systems. I also have a passion for Low Level programming that started especially  by starting building my own Operating System in Rust and C.  [SecureOS](https://github.com/EngineGames-Development/SecureOS).
  
 ---
 # 🚀 Core Engineering Pillars
