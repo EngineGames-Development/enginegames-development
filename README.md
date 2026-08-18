@@ -16,10 +16,10 @@
 
 | Technology | Technologies & Languages |
 | :--- | :--- |
-| **Languages** | `Python`, `Javascript(NodeJS)`, `PHP`,  `C`, `C++`, `Rust`, `Assembly(NASM)`, `Lua(u)` |
+| **Languages** | `Python`, `Javascript`,  `C`, `C++`, `Rust`, `Assembly(NASM)`, `Lua(u)` |
 | **Styling and Config**   | `HTML`, `CSS`, `JSON(etc.)`
-| **Databases** | `MySQL`, `MongoDB` |
-| **Graphics & Hardware** | `Vulkan(Coming up)` |
+| **Databases(Learning)** | `MySQL`, `MongoDB` |
+| **Graphics & Hardware(Learning)** | `Vulkan(Coming up)` |
 | **Platforms & Systems** | `Linux`, `Windows` |
 | **Embedded Systems** |  `Raspberry Pi`, `Arduino`|
 
