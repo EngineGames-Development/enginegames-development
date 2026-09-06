@@ -60,52 +60,52 @@ I also have a passion for low-level programming, which started when I began buil
 # Technologies
 
 <p align="left">
-<a href="https://www.c-language.org/" target="_blank" rel="noreferrer">
+<a href="https://www.c-language.org/" target="_blank" rel="noreferrer" style="text-decoration: none;">
   <img src="https://skillicons.dev/icons?i=c" alt="C" width="40" height="40"/>
 </a>&nbsp;
-<a href="https://isocpp.org" target="_blank" rel="noreferrer">
+<a href="https://www.c-language.org/" target="_blank" rel="noreferrer" style="text-decoration: none;">
   <img src="https://skillicons.dev/icons?i=cpp" alt="C++" width="40" height="40"/>
 </a>&nbsp;
 <a href="https://rust-lang.org" target="_blank" rel="noreferrer">
   <img src="https://skillicons.dev/icons?i=rust" alt="Rust" width="40" height="40"/>
 </a>&nbsp;
-<a href="https://nodejs.org" target="_blank" rel="noreferrer">
+<a href="https://www.c-language.org/" target="_blank" rel="noreferrer" style="text-decoration: none;">
   <img src="https://skillicons.dev/icons?i=nodejs" alt="NodeJS" width="40" height="40"/>
 </a>&nbsp;
-<a href="https://lua.org" target="_blank" rel="noreferrer">
+<a href="https://www.c-language.org/" target="_blank" rel="noreferrer" style="text-decoration: none;">
   <img src="https://skillicons.dev/icons?i=lua" alt="Lua" width="40" height="40"/>
 </a>&nbsp;
-<a href="https://www.arduino.cc/" target="_blank" rel="noreferrer">
+<a href="https://www.c-language.org/" target="_blank" rel="noreferrer" style="text-decoration: none;">
   <img src="https://skillicons.dev/icons?i=arduino" alt="Arduino" width="40" height="40"/>
 </a>&nbsp;
-<a href="https://developer.mozilla.org/en-US/docs/Web/HTML" target="_blank" rel="noreferrer">
+<a href="https://www.c-language.org/" target="_blank" rel="noreferrer" style="text-decoration: none;">
   <img src="https://skillicons.dev/icons?i=html" alt="HTML5" width="40" height="40"/>
 </a>&nbsp;
-<a href="https://developer.mozilla.org/en-US/docs/Web/CSS" target="_blank" rel="noreferrer">
+<a href="https://www.c-language.org/" target="_blank" rel="noreferrer" style="text-decoration: none;">
   <img src="https://skillicons.dev/icons?i=css" alt="CSS3" width="40" height="40"/>
 </a>&nbsp;
-<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank" rel="noreferrer">
+<a href="https://www.c-language.org/" target="_blank" rel="noreferrer" style="text-decoration: none;">
   <img src="https://skillicons.dev/icons?i=js" alt="JavaScript" width="40" height="40"/>
 </a>&nbsp;
-<a href="https://www.microsoft.com/windows" target="_blank" rel="noreferrer">
+<a href="https://www.c-language.org/" target="_blank" rel="noreferrer" style="text-decoration: none;">
   <img src="https://skillicons.dev/icons?i=windows" alt="Windows" width="40" height="40"/>
 </a>&nbsp;
-<a href="https://www.kernel.org/" target="_blank" rel="noreferrer">
+<a href="https://www.c-language.org/" target="_blank" rel="noreferrer" style="text-decoration: none;">
   <img src="https://skillicons.dev/icons?i=linux" alt="Linux" width="40" height="40"/>
 </a>&nbsp;
-<a href="https://www.mysql.com/" target="_blank" rel="noreferrer">
+<a href="https://www.c-language.org/" target="_blank" rel="noreferrer" style="text-decoration: none;">
   <img src="https://skillicons.dev/icons?i=mysql" alt="MySQL" width="40" height="40"/>
 </a>&nbsp;
-<a href="https://www.mongodb.com/" target="_blank" rel="noreferrer">
+<a href="https://www.c-language.org/" target="_blank" rel="noreferrer" style="text-decoration: none;">
   <img src="https://skillicons.dev/icons?i=mongodb" alt="MongoDB" width="40" height="40"/>
 </a>&nbsp;
-<a href="https://www.php.net/" target="_blank" rel="noreferrer">
+<a href="https://www.c-language.org/" target="_blank" rel="noreferrer" style="text-decoration: none;">
   <img src="https://skillicons.dev/icons?i=php" alt="PHP" width="40" height="40"/>
 </a>&nbsp;
-<a href="https://www.python.org/" target="_blank" rel="noreferrer">
+<a href="https://www.c-language.org/" target="_blank" rel="noreferrer" style="text-decoration: none;">
   <img src="https://skillicons.dev/icons?i=py" alt="Python" width="40" height="40"/>
 </a>&nbsp;
-<a href="https://unity.com/" target="_blank" rel="noreferrer">
+<a href="https://www.c-language.org/" target="_blank" rel="noreferrer" style="text-decoration: none;">
   <img src="https://skillicons.dev/icons?i=unity" alt="Unity" width="40" height="40"/>
 </a>
 </p>
