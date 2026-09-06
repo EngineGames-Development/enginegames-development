@@ -1,18 +1,18 @@
-# 🎮 EngineGames Development ⚙️
+# EngineGames Development
 "Look, if you had one shot or one opportunity to seize everything you ever wanted in one moment, would you capture it, or just let it slip?"
 
 ---
-# 👋 Introduction
+# Introduction
  I started as a Roblox/Game developer, however one day I started getting interested in the fields Fullstack,CyberSecurity,OS,AI and Embedded Systems. I also have a passion for Low Level programming that started especially  by starting building my own Operating System in Rust and C.  [SecureOS](https://github.com/EngineGames-Development/SecureOS).
  
 ---
-# 🚀 What I'm Working On
-*   **💻⚙️🗄️ Fullstack:** Building my own Password Manager(work in progress): [EngineManager](https://github.com/EngineGames-Development/EngineManager)
-*   **💻 Operating Systems & Low-Level:** Building my own OS, (Bootloader), Kernel, drivers, x86 assembly, C/++, Rust, etc. Old Discontinued OS: [OS,Discontinued](https://github.com/EngineGames-Development/SecureOS) New OS(Coming up) : [SecureRustOS](https://github.com/EngineGames-Development/SecureRustOS)
-*   **🛡️ Cybersecurity & Reverse Engineering:** Reverse Engineering with Ghidra/Ida Pro and other tools. Wireshark,Nmap etc. Own Antivirus: [Toy Antivirus](https://github.com/EngineGames-Development/Engine-s-Antivirus)
-*   **🧠 AI & Embedded Systems:** I love building projects with Arduino and Raspberry Pi. Also including AI. Entropy/Quantum: [Entropy](https://github.com/EngineGames-Development/Hybrid-Entropy-Computing-Platform)
+# What I'm Working On
+*   **Fullstack:** Building my own Password Manager(work in progress): [EngineManager](https://github.com/EngineGames-Development/EngineManager)
+*   **Operating Systems & Low-Level:** Building my own OS, (Bootloader), Kernel, drivers, x86 assembly, C/++, Rust, etc. Old Discontinued OS: [OS,Discontinued](https://github.com/EngineGames-Development/SecureOS) New OS(Coming up) : [SecureRustOS](https://github.com/EngineGames-Development/SecureRustOS)
+*   **Cybersecurity & Reverse Engineering:** Reverse Engineering with Ghidra/Ida Pro and other tools. Wireshark,Nmap etc. Own Antivirus: [Toy Antivirus](https://github.com/EngineGames-Development/Engine-s-Antivirus)
+*   **AI & Embedded Systems:** I love building projects with Arduino and Raspberry Pi. Also including AI. Entropy/Quantum: [Entropy](https://github.com/EngineGames-Development/Hybrid-Entropy-Computing-Platform)
 ---
-#  🛠️ The Tech Stack
+#  The Tech Stack
 
 | Technology | Technologies & Languages |
 | :--- | :--- |
@@ -25,7 +25,7 @@
 
 ---
 
-# 📂 Featured Repositories
+# Featured Repositories
 
 *   **[SecureOS]([link](https://github.com/EngineGames-Development/SecureOS](https://github.com/EngineGames-Development/SecureRustOS)))** – Bare-metal educational operating system in Rust(work in progress).
 *   **[Hybrid-Entropy-Computing-Platform]([link](https://github.com/EngineGames-Development/Hybrid-Entropy-Computing-Platform))** – A hardware/software system using optical entropy generation for randomness. C++, Python.
@@ -33,7 +33,7 @@
 
 ---
 
-# 📈 GitHub Stats
+# GitHub Stats
 
 
 <p align="left">
