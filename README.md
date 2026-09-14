@@ -43,7 +43,7 @@ I also have a passion for low-level programming, which started when I began buil
 | **Databases**           | `MySQL`, `MongoDB`                                                   |
 | **Platforms & Systems** | `Linux`, `Windows`                                                   |
 | **Embedded Systems**    | `Raspberry Pi`, `Arduino`                                            |
-| **Graphics**            | `Vulkan`                                                             |
+| **Graphics**            | `Vulkan`, `OpenGL`                                                   |
 
 ---
 
