@@ -1,14 +1,8 @@
-# EngineGames Development
-
-> "Look, if you had one shot or one opportunity to seize everything you ever wanted in one moment, would you capture it, or just let it slip?"
-
----
-
 # Introduction
 
 I started as a Roblox/Game developer. However, over time I got interested in Fullstack, Cybersecurity, Operating Systems, AI and Embedded Systems.
 
-I also have a passion for low-level programming, which started when I began building my own operating system using Rust and C.
+I also have a passion for low-level programming, which started when I began building my experimental operating system using Rust and C.
 
 [SecureOS](https://github.com/EngineGames-Development/SecureOS)
 
@@ -49,7 +43,7 @@ I also have a passion for low-level programming, which started when I began buil
 
 # Featured Repositories
 
-* **[SecureOS](https://github.com/EngineGames-Development/SecureOS)** – Bare-metal operating system project written in Rust. Work in progress.
+* **[SecureOS](https://github.com/EngineGames-Development/SecureOS)** – Hobbyist and experimental x86_32 operating system written in C, Rust and x86 Assembly.Work in progress.
 
 * **[Hybrid-Entropy-Computing-Platform](https://github.com/EngineGames-Development/Hybrid-Entropy-Computing-Platform)** – A hardware/software project exploring optical entropy generation and randomness. C++, Python.
 
