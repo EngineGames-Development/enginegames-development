@@ -10,8 +10,9 @@ I also have a passion for low-level programming, which started when I began buil
 
 # What I'm Working On
 
-* **Fullstack:** Building my own password manager (work in progress): [EngineManager](https://github.com/EngineGames-Development/EngineManager)
-                 Vibecoding an AI assistant called [EngineBuddy](https://github.com/EngineGames-Development/EngineBuddy)
+* **Fullstack:** Building my own password manager (work in progress): [EngineManager](https://github.com/EngineGames-Development/EngineManager),
+
+  Vibecoding an AI assistant called: [EngineBuddy](https://github.com/EngineGames-Development/EngineBuddy)
 
 * **Operating Systems & Low-Level:** Building my own OS, including the bootloader, kernel, drivers, x86 assembly, C/C++, Rust, etc.
 
