@@ -11,12 +11,13 @@ I also have a passion for low-level programming, which started when I began buil
 # What I'm Working On
 
 * **Fullstack:** Building my own password manager (work in progress): [EngineManager](https://github.com/EngineGames-Development/EngineManager)
+                 Vibecoding an AI assistant called [EngineBuddy](https://github.com/EngineGames-Development/EngineBuddy)
 
 * **Operating Systems & Low-Level:** Building my own OS, including the bootloader, kernel, drivers, x86 assembly, C/C++, Rust, etc.
 
   Old / discontinued OS: [SecureOS](https://github.com/EngineGames-Development/SecureOS)
 
-  New OS (coming up): [SecureRustOS](https://github.com/EngineGames-Development/SecureRustOS)
+  New OS (coming up):    [SecureRustOS](https://github.com/EngineGames-Development/SecureRustOS)
 
 * **Cybersecurity & Reverse Engineering:** Learning reverse engineering with Ghidra, IDA Pro and other tools. I also work with tools such as Wireshark and Nmap.
 
@@ -48,6 +49,7 @@ I also have a passion for low-level programming, which started when I began buil
 * **[Hybrid-Entropy-Computing-Platform](https://github.com/EngineGames-Development/Hybrid-Entropy-Computing-Platform)** – A hardware/software project exploring optical entropy generation and randomness. C++, Python.
 
 * **[Engine's Antivirus](https://github.com/EngineGames-Development/Engine-s-Antivirus)** – An educational antivirus project using Python and Rust.
+* **[Engine Buddy](https://github.com/EngineGames-Development/EngineBuddy)** - Vibecoding an AI desktop companion called EngineBuddy.
 
 ---
 
