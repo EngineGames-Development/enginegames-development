@@ -1015,6 +1015,13 @@ function lockPointer() {
     const p = el.requestPointerLock();
     if (p && p.catch) p.catch(() => { dragLook = true; });
   } catch { dragLook = true; }
+  // sandboxed frames may ignore the request silently: fall back to drag-to-look
+  setTimeout(() => {
+    if (!locked && !dragLook) {
+      dragLook = true;
+      $('hint').textContent = 'Drag to look · H = help';
+    }
+  }, 700);
 }
 
 overlay.addEventListener('click', () => {
