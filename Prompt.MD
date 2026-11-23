@@ -140,7 +140,8 @@ signatures, crypto) instead of just reading labels.
   tap left/right to play the arcade.
 - **Pet the cat** (wakes up, purrs, hearts float up), a **rubber debugging duck** on the CRT, and a **quadcopter drone** that flies
   a lap around the room from its landing pad (`drone`).
-- README section with a preview image linking to the GitHub Pages build (`room/` is served as-is thanks to `.nojekyll`).
+- README section with an animated GIF tour linking to the GitHub Pages build (`room/` is served as-is thanks to `.nojekyll`).
+- The page shows the room in a framed 16:9 stage with the text (about, features, controls, projects) below it, plus a fullscreen button (`F`).
 
 ## Deliverables
 
@@ -158,5 +159,5 @@ room/js/arcade.js  ← Packet Catcher mini game
 room/js/db.js      ← mini SQL + MongoDB-style query engine
 room/js/audio.js   ← synthesized sound effects
 room/js/quests.js  ← quest / achievement tracker
-room/preview.jpg   ← README preview
+room/preview.gif   ← animated README preview (360° tour)
 ```

@@ -960,7 +960,7 @@ animated.push((t, dt) => {
 const gpu = gpuMaterial();
 gpu.userData = { ...noOutline };
 const gpuScreen = new THREE.Group();
-gpuScreen.position.set(4.94, 1.7, 0.7);
+gpuScreen.position.set(4.94, 2.0, 0.7);
 gpuScreen.rotation.y = -Math.PI / 2;
 scene.add(gpuScreen);
 box(1.95, 1.25, 0.08, mat(0x2d2a4a), 0, 0, 0, gpuScreen, 0.06);
@@ -1856,7 +1856,7 @@ function frame() {
   irq.timer += Math.floor(irqAcc);
   irqAcc -= Math.floor(irqAcc);
 
-  if (started && terminal.update(dt)) termTex.needsUpdate = true;
+  if (terminal.update(dt)) termTex.needsUpdate = true; // boots right away, so the CRT is alive behind the start screen
 
   crt.uniforms.time.value = t;
   lava.uniforms.time.value = t;

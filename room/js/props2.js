@@ -254,13 +254,15 @@ export function buildMore(k) {
   const printer = new THREE.Group();
   printer.position.set(4.74, 0.5, 0.88);
   printer.rotation.y = -Math.PI / 2;
+  printer.scale.setScalar(1.35);
   scene.add(printer);
   const frameMat = mat(0x3d4a72), accent = mat(C.orange);
   box(0.36, 0.05, 0.32, frameMat, 0, 0.025, 0, printer, 0.015);
   for (const x of [-0.16, 0.16]) box(0.03, 0.42, 0.03, frameMat, x, 0.26, -0.12, printer, 0.01);
   box(0.36, 0.035, 0.035, frameMat, 0, 0.47, -0.12, printer, 0.012);
-  const spool = cyl(0.06, 0.06, 0.04, accent, 0, 0.55, -0.12, printer, 20);
+  const spool = cyl(0.06, 0.06, 0.04, accent, 0.21, 0.3, -0.12, printer, 20); // side-mounted filament spool
   spool.rotation.z = Math.PI / 2;
+  cyl(0.008, 0.008, 0.05, mat(0xb8bcc8), 0.185, 0.3, -0.12, printer, 8).rotation.z = Math.PI / 2;
   const bed = box(0.26, 0.012, 0.24, mat(0x2b2340), 0, 0.06, 0.02, printer, 0.004);
   bed.receiveShadow = true;
   const gantry = new THREE.Group();
@@ -309,6 +311,7 @@ export function buildMore(k) {
     const [name, make] = MODELS[modelIdx];
     if (pr.mesh) printer.remove(pr.mesh);
     const geo = make();
+    geo.scale(1.3, 1.3, 1.3);
     geo.computeBoundingBox();
     pr.h = geo.boundingBox.max.y;
     const m = new THREE.MeshToonMaterial({ color: [C.yellow, C.green, C.pink][modelIdx], gradientMap: k.gradientMap, clippingPlanes: [clipPlane], side: THREE.DoubleSide });
@@ -336,7 +339,7 @@ export function buildMore(k) {
     const rr = 0.03 + 0.025 * Math.sin(t * 2.3);
     headG.position.set(Math.cos(a) * rr, 0, 0.02 + Math.sin(a) * rr + 0.11);
     pr.mesh.getWorldPosition(wp);
-    clipPlane.constant = wp.y + f * pr.h; // keep everything below the current layer
+    clipPlane.constant = wp.y + f * pr.h * printer.scale.y; // keep everything below the current layer (world units)
     if ((pr.tick += dt) > 0.14) { pr.tick = 0; sfx.tone?.(420 + Math.random() * 160, 0.05, { type: 'square', vol: 0.02 }); }
     if (f >= 1) {
       pr.printing = false;
@@ -346,6 +349,12 @@ export function buildMore(k) {
       showInfo('3D printer', `Print finished: a little ${pr.name}! Click the printer again for the next model.`);
     }
   });
+  // invisible hit box: the frame is open, so clicks would otherwise pass straight through it
+  const hitMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false });
+  hitMat.userData = { ...noOutline };
+  const hit = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.62, 0.34), hitMat);
+  hit.position.set(0, 0.31, 0.02);
+  printer.add(hit);
   interact(printer, '[E] 3D printer: print something', () => {
     const name = api.startPrint();
     showInfo('3D printer', name ? `Slicing <code>${name}.stl</code> and printing it layer by layer (a clipping plane rises with the nozzle).` : 'Still printing. Patience: real prints take hours!');

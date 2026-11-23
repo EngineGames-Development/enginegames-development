@@ -777,6 +777,11 @@ export function buildExtras(k) {
   const t3 = cyl(0.02, 0.025, 0.1, mat(C.yellow), 0, 0, -0.22, tube, 12);
   t3.rotation.x = Math.PI / 2;
   collide(-2.82, -2.38, 3.03, 3.5);
+  const scopeHitMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false });
+  scopeHitMat.userData = { ...noOutline };
+  const scopeHit = new THREE.Mesh(new THREE.BoxGeometry(0.45, 1.35, 0.45), scopeHitMat); // easier to aim at than thin legs
+  scopeHit.position.y = 0.68;
+  scopeStand.add(scopeHit);
   interact(scopeStand, '[E] Nmap telescope: scan the neighborhood', () => {
     const lines = HOSTS.map((h) => `<code>${h.ip.join('.')}</code> ${h.name}: ${h.ports.join(', ')}`).join('<br>');
     showInfo('nmap -sV 10.0.0.0/24', `Spotted ${HOSTS.length} hosts up:<br>${lines}<br><small>Full output in the terminal: <code>nmap</code></small>`, 10000);

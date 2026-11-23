@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is the GitHub **profile README** repo of EngineGames-Development (`README.md` is shown on their GitHub profile). It also hosts **The Engine Room** (`room/`): an interactive cartoon 3D room built with three.js out of the owner's interests (OS dev, low-level, security/RE, embedded, AI, game dev). `Prompt.MD` is the design spec for the room; keep it in sync when adding or changing room features.
 
-The README links to the room's GitHub Pages build (`https://enginegames-development.github.io/enginegames-development/room/`) and shows `room/preview.jpg`. `.nojekyll` makes Pages serve `room/` as-is. A README cannot run JavaScript or embed iframes, so the README only ever gets an image/GIF plus a link.
+The README links to the room's GitHub Pages build (`https://enginegames-development.github.io/enginegames-development/room/`) and shows `room/preview.gif`. `.nojekyll` makes Pages serve `room/` as-is. A README cannot run JavaScript or embed iframes, so the README only ever gets an image/GIF plus a link.
 
 ## Running and checking
 
