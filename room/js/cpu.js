@@ -427,4 +427,74 @@ show:
     SLP 3
     RET
 `,
+  'arm.asm': `; arm.asm - wave the robot arm on the electronics bench
+; ports: 0x30 = base rotation, 0x31 = shoulder, 0x32 = claw (0 closed .. 255 open)
+    MOV B, 150
+    OUT 0x31, B      ; lift the shoulder
+    MOV A, 40
+right:
+    OUT 0x30, A      ; rotate base
+    OUT 0x00, A      ; mirror on the LEDs
+    SLP 2
+    ADD A, 4
+    CMP A, 200
+    JNZ right
+    MOV C, 255
+    OUT 0x32, C      ; open claw
+    SLP 30
+left:
+    OUT 0x30, A
+    OUT 0x00, A
+    SLP 2
+    SUB A, 4
+    CMP A, 40
+    JNZ left
+    MOV C, 0
+    OUT 0x32, C      ; close claw
+    SLP 30
+    JMP right
+`,
 };
+
+// The crackme ships only as a binary (~/re/crackme.bin). Its source stays here, out of the virtual FS.
+// It reads a zero-terminated guess from 0xC0, XORs every byte with 0x5A and compares it with a table.
+export const CRACKME_SRC = `
+    MOV B, 0xC0      ; B -> user input
+    MOV C, table     ; C -> encoded secret
+loop:
+    LD A, [C]
+    CMP A, 0
+    JZ endcheck
+    LD D, [B]
+    XOR D, 0x5A
+    CMP D, A
+    JNZ fail
+    INC B
+    INC C
+    JMP loop
+endcheck:
+    LD D, [B]
+    CMP D, 0
+    JNZ fail
+    MOV B, okmsg
+    JMP print
+fail:
+    MOV B, badmsg
+print:
+    LD A, [B]
+    CMP A, 0
+    JZ done
+    OUT 0x01, A
+    INC B
+    JMP print
+done:
+    HLT
+table:
+    db 0x28, 0x6B, 0x34, 0x3D, 0x6A, 0
+okmsg:
+    db "ACCESS GRANTED\\n", 0
+badmsg:
+    db "ACCESS DENIED\\n", 0
+`;
+export const CRACKME_INPUT = 0xc0;
+

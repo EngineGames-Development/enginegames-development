@@ -112,6 +112,25 @@ signatures, crypto) instead of just reading labels.
   Analysis, …). Clicking a book shows a short note about it.
 - Light switch (room lights on/off), desk lamp, rug, window with a starry night sky, posters, and bloom.
 
+### 14. More interest-themed objects
+- **RE laptop** (reverse engineering, Ghidra / IDA nod): a Ghidra-style CodeBrowser showing the listing and decompiled C of
+  `~/re/crackme.bin`, an EG-8 binary that XOR-checks a password stored at `0xC0`. Solve it with `strings`, `hexdump`,
+  `load` + `dis`, then `crackme <password>`. Success stamps the laptop "CRACKED!" with a confetti burst.
+- **Arcade cabinet**: an original playable mini game, *Packet Catcher* (move a firewall, catch packets and keys, avoid malware),
+  drawn to a canvas and shown through the CRT shader. High score kept in localStorage.
+- **Electronics bench**: an oscilloscope that draws EG-8 port `0x00` as 8 live logic traces; a robot arm on ports
+  `0x30` (base) / `0x31` (shoulder) / `0x32` (claw) with `arm.asm` and the `arm` command.
+- **Soldering station**: digital temperature display that heats from room temperature to 350 °C, glowing iron tip, helping hands with a
+  magnifier and a PCB. Solder its 8 joints one by one (too cold = refused), with flux smoke, until the board's LED lights up. `solder on|off`.
+- **Build PC** with a glass front and spinning RGB fans: `make` / `make run` fakes NASM + cargo + ld + QEMU and reboots the terminal.
+- **Database filing cabinet** (MySQL / MongoDB): drawers run SQL queries; terminal `sql` supports SELECT (WHERE / AND / OR /
+  LIKE / ORDER BY / LIMIT), SHOW TABLES, DESCRIBE, and `mongo db.<coll>.find({...})` with `$gt $lt $ne $regex`.
+- **Project corkboard** with red string: one index card per repository (SecureOS, SecureRustOS, EngineManager, EngineBuddy,
+  Engine's Antivirus, Hybrid-Entropy-Computing-Platform).
+- **Whiteboard**: hand-drawn x86 real-mode memory map (IVT, BDA, 0x7C00, VGA 0xB8000, BIOS ROM); terminal `memmap`.
+- **Wireshark shark plush** on the server (toggles packet capture) and an **Nmap telescope** pointed out of the window.
+- **Tux plush**: a penguin that hops and tells a Linux joke in a speech bubble each time it is clicked.
+
 ## Deliverables
 
 ```
@@ -122,5 +141,8 @@ room/js/cpu.js     ← EG-8 CPU, assembler, disassembler
 room/js/terminal.js← canvas terminal, shell, virtual filesystem
 room/js/net.js     ← packet builder / checksum / decoder
 room/js/entropy.js ← optical entropy pool
-room/js/shaders.js ← CRT, lava lamp, GPU screen shaders
+room/js/shaders.js ← CRT, lava lamp, GPU screen and sky shaders
+room/js/props.js   ← laptop, bench, soldering station, arcade, corkboard, cabinet, whiteboard, plushies
+room/js/arcade.js  ← Packet Catcher mini game
+room/js/db.js      ← mini SQL + MongoDB-style query engine
 ```

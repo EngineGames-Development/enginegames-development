@@ -9,6 +9,7 @@ import { EntropyPool } from './entropy.js';
 import { Terminal, buddyReply, generatePassword } from './terminal.js';
 import { randomFrame, decode, hexdump } from './net.js';
 import { crtMaterial, lavaMaterial, gpuMaterial, skyMaterial, GPU_MODES } from './shaders.js';
+import { buildExtras } from './props.js';
 
 // canvas signs and posters use the Fredoka web font: wait for it (but never longer than 2.5 s)
 try {
@@ -181,7 +182,12 @@ const sys = {
   toggleLights: () => toggleLights(),
   onExit: () => exitFocus(),
   onProgramLoaded: () => {},
+  setArm: (b, s, c) => extras?.setArm(b, s, c),
+  onCracked: () => extras?.onCracked(),
+  onBuild: (on) => extras?.setBuilding(on),
+  solder: (cmd) => extras?.solder(cmd),
 };
+let extras = null; // built further down (props.js)
 const terminal = new Terminal(sys);
 
 cpu.ports.out = (port, v) => {
@@ -189,6 +195,7 @@ cpu.ports.out = (port, v) => {
   else if (port === 0x01) terminal.putc(v);
   else if (port === 0x02) terminal.print(String(v), '#ffb347');
   else if (port === 0x20) setLampHue(v);
+  else if (port >= 0x30 && port <= 0x32) extras?.setArmPort(port, v);
 };
 cpu.ports.in = (port) => (port === 0x10 ? pool.byte() : 0);
 
@@ -384,7 +391,7 @@ ball(0.014, glow(0x55ff88, 1), 0.27, 0.1, 0.258, monitor, 10);     // power LED
 const screenGlow = new THREE.PointLight(0x66ffaa, 0.5, 1.8, 2);
 screenGlow.position.set(0, 0.36, 0.5);
 monitor.add(screenGlow);
-interact(monitor, '[E] Use the SecureRustOS terminal', () => enterFocus());
+interact(monitor, '[E] Use the SecureRustOS terminal', () => enterFocus(termFocus));
 
 // keyboard with instanced keys that flash when you type
 const keyboard = new THREE.Group();
@@ -412,7 +419,7 @@ animated.push((t, dt) => {
   }
   keys.instanceColor.needsUpdate = true;
 });
-interact(keyboard, '[E] Use the SecureRustOS terminal', () => enterFocus());
+interact(keyboard, '[E] Use the SecureRustOS terminal', () => enterFocus(termFocus));
 
 // mouse + mouse pad
 box(0.2, 0.006, 0.17, mat(C.purple), 0.3, deskTopY + 0.003, -3.12, scene, 0.003);
@@ -1245,7 +1252,7 @@ tail.position.set(-0.05, -0.06, 0);
 tail.castShadow = true;
 cat.add(tail);
 const zzz = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.15), new THREE.MeshBasicMaterial({
-  transparent: true, depthWrite: false,
+  alphaTest: 0.5,
   map: canvasTexture(256, 128, (g, W, H) => {
     g.font = 'bold 64px "Fredoka", sans-serif'; g.textBaseline = 'middle'; g.lineJoin = 'round';
     [['z', 30, 92, 40], ['z', 100, 64, 56], ['Z', 175, 36, 72]].forEach(([ch, x, y, px]) => {
@@ -1309,6 +1316,14 @@ animated.push((t) => {
 interact(buddy, '[E] Talk to EngineBuddy', () => {
   const topics = ['hello', 'what is a gdt', 'a20', 'entropy', 'paging', 'boot', 'rust', 'virus', 'vulkan', 'packet', 'cpu', ''];
   showInfo('EngineBuddy', escapeHtml(buddyReply(topics[Math.floor(Math.random() * topics.length)])) + '<br><small>Ask anything in the terminal: <code>buddy &lt;question&gt;</code></small>', 9000);
+});
+
+// ------------------------------------------------------------------ extra interest-themed objects
+
+extras = buildExtras({
+  scene, camera, C, mat, glow, basic, box, cyl, ball, sign, canvasTexture, interact, collide, animated,
+  showInfo: (...a) => showInfo(...a), enterFocus: (t) => enterFocus(t), toggleCapture: () => toggleCapture(),
+  terminal, cpu, deskTopY, noOutline, gradientMap, getLeds: () => ledState,
 });
 
 // ------------------------------------------------------------------ HUD
@@ -1402,8 +1417,7 @@ function use() {
 window.addEventListener('keydown', (e) => {
   if (mode === 'focus') {
     if (e.key === 'Escape') { exitFocus(); e.preventDefault(); return; }
-    terminal.handleKey(e);
-    flashKey();
+    focus?.keydown?.(e);
     if (['Tab', 'Backspace', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', "'", '/', 'PageUp', 'PageDown'].includes(e.key) || e.ctrlKey) e.preventDefault();
     return;
   }
@@ -1413,10 +1427,13 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyE' && started) use();
   if (e.code === 'KeyH') $('help').classList.toggle('show');
 });
-window.addEventListener('keyup', (e) => keysDown.delete(e.code));
+window.addEventListener('keyup', (e) => {
+  keysDown.delete(e.code);
+  if (mode === 'focus') focus?.keyup?.(e);
+});
 window.addEventListener('blur', () => keysDown.clear());
 window.addEventListener('paste', async (e) => {
-  if (mode !== 'focus') return;
+  if (mode !== 'focus' || focus !== termFocus) return;
   const text = e.clipboardData.getData('text');
   const lines = text.replace(/\r/g, '').split('\n');
   for (let i = 0; i < lines.length; i++) {
@@ -1427,16 +1444,27 @@ window.addEventListener('paste', async (e) => {
   terminal.dirty = true;
 });
 
-function focusPose() {
+// Sit-down "focus" targets: the CRT terminal, the arcade and the RE laptop.
+const termFocus = {
+  screen, w: 0.52, h: 0.39,
+  hint: 'Typing into SecureRustOS · press <b>Esc</b> (or click here) to stand up',
+  keydown: (e) => { terminal.handleKey(e); flashKey(); },
+};
+let focus = null;
+
+function focusPose(target) {
   const center = new THREE.Vector3();
-  screen.getWorldPosition(center);
-  const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(monitor.quaternion);
+  target.screen.getWorldPosition(center);
+  const wq = new THREE.Quaternion();
+  target.screen.getWorldQuaternion(wq);
+  const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(wq);
   const vFov = THREE.MathUtils.degToRad(camera.fov);
-  const dH = (0.39 / 2) / Math.tan(vFov / 2);
-  const dW = (0.52 / 2) / (Math.tan(vFov / 2) * camera.aspect);
-  const d = Math.max(dH, dW) * 1.12;
+  const dH = (target.h / 2) / Math.tan(vFov / 2);
+  const dW = (target.w / 2) / (Math.tan(vFov / 2) * camera.aspect);
+  const d = Math.max(dH, dW) * (target.fit ?? 1.12);
   const pos = center.clone().addScaledVector(normal, d);
-  const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().lookAt(pos, center, new THREE.Vector3(0, 1, 0)));
+  const up = new THREE.Vector3(0, 1, 0).applyQuaternion(wq);
+  const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().lookAt(pos, center, up));
   return { pos, q };
 }
 function startTween(toPos, toQ, done) {
@@ -1448,20 +1476,24 @@ function startTween(toPos, toQ, done) {
   tween.done = done;
   mode = 'transition';
 }
-function enterFocus() {
+function enterFocus(target = termFocus) {
   if (mode !== 'walk') return;
+  focus = target;
   savedPose.pos.copy(camera.position);
   savedPose.quat.copy(camera.quaternion);
-  const { pos, q } = focusPose();
+  const { pos, q } = focusPose(target);
   keysDown.clear();
   if (locked) document.exitPointerLock();
   crosshair.classList.add('hidden');
   tooltip.classList.remove('show');
+  focusHint.innerHTML = target.hint;
   startTween(pos, q, () => { mode = 'focus'; focusHint.classList.add('show'); });
 }
 function exitFocus() {
   if (mode !== 'focus') return;
   focusHint.classList.remove('show');
+  focus?.onExit?.();
+  focus = null;
   startTween(savedPose.pos, savedPose.quat, () => {
     mode = 'walk';
     crosshair.classList.remove('hidden');
@@ -1514,7 +1546,7 @@ function updateHover() {
   const hits = raycaster.intersectObjects(scene.children, true);
   let found = null;
   for (const h of hits) {
-    if (h.object === jar || h.object === zzz) continue;
+    if (h.object === jar || h.object === zzz || h.object.userData.noHit) continue;
     found = h.object.userData.interact ?? null;
     break;
   }
@@ -1584,6 +1616,6 @@ window.addEventListener('resize', () => {
 });
 
 // debug / automation hook
-window.engineRoom = { get hovered() { return hovered?.label; }, get mode() { return mode; }, scene, camera, cpu, pool, terminal, enterFocus, exitFocus, toggleLights, setPose: (x, z, y, p) => { camera.position.set(x, 1.6, z); yaw = y; pitch = p ?? 0; } };
+window.engineRoom = { get extras() { return extras; }, get hovered() { return hovered?.label; }, get mode() { return mode; }, scene, camera, cpu, pool, terminal, enterFocus, exitFocus, toggleLights, setPose: (x, z, y, p) => { camera.position.set(x, 1.6, z); yaw = y; pitch = p ?? 0; } };
 
 frame();

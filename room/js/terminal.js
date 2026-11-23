@@ -1,7 +1,8 @@
 // Canvas-rendered terminal running a tiny "SecureRustOS" shell with a virtual filesystem.
 // The canvas becomes a texture on the CRT monitor in the 3D room.
 
-import { assemble, disassemble, hex, REGS, PROGRAMS } from './cpu.js';
+import { CPU, assemble, disassemble, hex, REGS, PROGRAMS, CRACKME_SRC, CRACKME_INPUT } from './cpu.js';
+import { runSQL, formatTable, runMongo } from './db.js';
 import { shannon } from './entropy.js';
 import { randomFrame, decode, hexdump, nmap } from './net.js';
 
@@ -38,6 +39,14 @@ function makeFS() {
           'Try:  run knight.asm   entropy   scan   sniff   gdt   neofetch\n' +
           'Write your own program:  write my.asm  (finish with a single "." line), then  run my.asm\n',
         asm,
+        re: {
+          'crackme.bin': assemble(CRACKME_SRC).bytes,
+          'README.txt':
+            'crackme.bin: find the password!\n' +
+            'Tools: hexdump crackme.bin | strings crackme.bin | load crackme.bin then dis 0 32\n' +
+            'The program reads your guess from 0xC0. Test it with: crackme <password>\n' +
+            'The laptop on the desk shows a Ghidra-style listing and decompiled view.\n',
+        },
         projects: {
           SecureRustOS: {
             'boot.asm':
@@ -101,7 +110,13 @@ const BUDDY = [
   [/arduino|raspberry|pi|embedded|gpio/, 'GPIO is just memory-mapped or port-mapped bits. Here port 0x00 drives 8 LEDs. `leds 0b10101010`.'],
   [/vulkan|opengl|shader|gpu/, 'The wall screen runs fragment shaders: raymarched SDFs, plasma, Mandelbrot. Click it to switch. Vulkan would need ~1000 lines for that triangle ;)'],
   [/network|packet|wireshark|nmap/, 'Every packet in the rack capture is built byte by byte with a real IPv4 checksum. Try `sniff 5` or `nmap`.'],
-  [/lua|roblox|game/, 'Where it all started: Lua game dev. Click the brick table to drop some bricks.'],
+  [/lua|roblox|game|arcade/, 'Where it all started: Lua game dev. Play Packet Catcher on the arcade cabinet, or drop bricks on the yellow table.'],
+  [/crack|reverse|ghidra|ida/, 'Reverse engineering tip: strings first, then the disassembly. The crackme XORs every byte with a constant. Look at the table!'],
+  [/sql|mysql|mongo|database/, 'The filing cabinet is a database. Try `sql SELECT * FROM projects` or `mongo db.devices.find({port: {$gt: 1000}})`.'],
+  [/arm|robot|servo/, 'The robot arm listens on ports 0x30 (base), 0x31 (shoulder) and 0x32 (claw). `run arm.asm` or `arm 200 150 255`.'],
+  [/scope|oscillo|logic analy/, 'The oscilloscope on the bench samples port 0x00 and draws all 8 LED bits as square waves. Try `run blink.asm`.'],
+  [/solder|iron|pcb/, 'Soldering: heat the iron to ~350 °C, heat the pad AND the leg, then feed the solder. A good joint is a shiny little cone.'],
+  [/make|build|qemu|compile/, '`make` builds SecureRustOS (nasm + cargo + ld) and `make run` boots it in "QEMU". The PC under the desk does the work.'],
   [/who are you|what are you/, "I'm EngineBuddy, a tiny keyword-matching AI. Not an LLM, just regexes with ambition."],
 ];
 
@@ -395,9 +410,11 @@ export class Terminal {
         const groups = [
           ['shell', 'ls cd pwd cat echo write rm clear history whoami uname date uptime neofetch reboot'],
           ['EG-8 cpu', 'asm <f>  run [f]  stop  step [n]  regs  mem [addr]  dis [addr]  clock [hz]  leds <v>  reset'],
-          ['low-level', 'gdt  irq  cpuinfo  lsdev  ps  hexdump <f>'],
+          ['low-level', 'gdt  irq  memmap  cpuinfo  lsdev  ps  hexdump <f>  make [run]'],
+          ['reversing', 'strings <f>  load <f.bin|f.asm>  crackme <password>   (start: cat ~/re/README.txt)'],
           ['security', 'scan  entropy [n]  vault gen [len]  vault hash <txt>  nmap  sniff [n]'],
-          ['room', 'buddy <question>  gpu [mode]  lights  lamp <hue 0-255>  exit'],
+          ['database', 'sql <SELECT ...|SHOW TABLES|DESCRIBE t>   mongo db.<coll>.find({...})'],
+          ['room', 'buddy <question>  gpu [mode]  lights  lamp <hue>  arm <base> <shoulder> <claw>  solder on|off  exit'],
         ];
         t.print('SecureRustOS shell - available commands:', c.white);
         for (const [g, cmds] of groups) t.print(`  ${g.padEnd(10)} ${cmds}`, c.fg);
@@ -558,6 +575,99 @@ export class Terminal {
         t.print(`port 0x20 <- 0x${hex(v)} (desk lamp hue)`, c.amber);
       },
 
+      load(args) {
+        if (!args[0]) throw new Error('usage: load <file.bin|file.asm>');
+        const { data } = t.findFile(args[0]);
+        if (typeof data === 'string') { const r = t.loadProgram(args[0]); t.print(`assembled and loaded ${r.size} bytes at 0x00`, c.cyan); return; }
+        cpu.load(data);
+        t.print(`loaded ${data.length} raw bytes at 0x00 (try: dis 0 32, mem)`, c.cyan);
+      },
+      strings(args) {
+        if (!args[0]) throw new Error('usage: strings <file>');
+        const b = toBytes(t.findFile(args[0]).data);
+        let cur = '', at = 0, n = 0;
+        const flush = () => { if (cur.length >= 4) { t.print(`0x${hex(at)}  ${cur.replace(/\n/g, '\\n')}`, c.amber); n++; } cur = ''; };
+        b.forEach((x, i) => {
+          if (x >= 32 && x < 127 || x === 10) { if (!cur) at = i; cur += String.fromCharCode(x); } else flush();
+        });
+        flush();
+        if (!n) t.print('(no printable strings of length >= 4)', c.dim);
+      },
+      crackme(_, rest) {
+        if (!rest) throw new Error('usage: crackme <password>   (hint: cat ~/re/README.txt)');
+        const bin = t.fs.home.engine.re?.['crackme.bin'] ?? assemble(CRACKME_SRC).bytes;
+        const vm = new CPU();
+        let out = '';
+        vm.ports.out = (port, v) => { if (port === 1) out += String.fromCharCode(v); };
+        vm.load(bin);
+        [...rest].slice(0, 0x30).forEach((ch, i) => { vm.mem[CRACKME_INPUT + i] = ch.charCodeAt(0) & 0xff; });
+        vm.halted = false;
+        let steps = 0;
+        while (!vm.halted && steps++ < 5000) { vm.sleep = 0; vm.step(); }
+        t.print(`[crackme.bin] input @0x${hex(CRACKME_INPUT)} = "${rest}"  (${steps} instructions)`, c.dim);
+        const ok = out.startsWith('ACCESS GRANTED');
+        t.print(out.trim() || '(no output)', ok ? c.fg : c.red);
+        if (ok) { t.print('*** Cracked! You reversed the XOR-0x5A check. ***', c.purple); sys.onCracked?.(); }
+      },
+      sql(_, rest) {
+        if (!rest) throw new Error("usage: sql SELECT name, lang FROM projects WHERE lang = 'Rust'   (or SHOW TABLES)");
+        formatTable(runSQL(rest)).forEach((l) => t.print(l, l.startsWith('+') ? c.dim : c.fg));
+      },
+      mongo(_, rest) {
+        if (!rest) throw new Error('usage: mongo db.projects.find({lang: "Python"})');
+        const res = runMongo(rest);
+        res.forEach((l) => t.print(l, c.fg));
+        if (!res.length) t.print('(no documents)', c.dim);
+      },
+      arm(args) {
+        const [b, s, cl] = args.map((x) => parseInt(x, 10) & 0xff);
+        if (args.length < 3 || [b, s, cl].some(Number.isNaN)) throw new Error('usage: arm <base 0-255> <shoulder 0-255> <claw 0-255>');
+        sys.setArm?.(b, s, cl);
+        t.print(`port 0x30 <- ${b}, 0x31 <- ${s}, 0x32 <- ${cl}`, c.amber);
+      },
+      solder(args) {
+        const st = sys.solder?.(args[0]);
+        if (!st) throw new Error('soldering station not found');
+        t.print(`soldering station: ${st.on ? 'ON' : 'OFF'}  tip ${Math.round(st.temp)} °C  joints ${st.joints}/8`, c.amber);
+        if (!args[0]) t.print('usage: solder on | off', c.dim);
+      },
+      make(args) {
+        const run = args[0] === 'run';
+        t.mode = 'boot';
+        sys.onBuild?.(true);
+        const L = (text, color = c.fg, d = 160) => [text, color, d];
+        t.queueLines([
+          L('nasm -f bin boot/boot.asm -o build/boot.bin', c.white, 300),
+          L('  boot.bin: 512 bytes, signature 0x55AA at offset 510', c.dim),
+          L('cargo build --release --target i686-securerust.json', c.white, 400),
+          L('   Compiling core v0.0.0 (sysroot)', c.fg, 350),
+          L('   Compiling spin v0.9.8', c.fg, 220),
+          L('   Compiling x86 v0.52.0', c.fg, 260),
+          L('   Compiling securerust_kernel v0.3.0 (~/projects/SecureRustOS)', c.fg, 600),
+          L('    Finished `release` profile [optimized] target(s) in 4.20s', c.cyan, 200),
+          L('ld -m elf_i386 -T linker.ld -o build/kernel.elf (entry rust_main @ 0x00100000)', c.white, 220),
+          L('dd if=build/boot.bin of=securerust.img conv=notrunc  ->  securerust.img (1.44 MB)', c.white, 260),
+          L(run ? 'qemu-system-i386 -drive format=raw,file=securerust.img -serial stdio' : 'build OK. `make run` to boot it.', run ? c.white : c.cyan, 700),
+          [() => sys.onBuild?.(false), null, 0],
+          run ? [() => t.boot(), null, 0] : [null, null, 0],
+        ]);
+      },
+      memmap() {
+        const rows = [
+          ['0x00000-0x003FF', 'Real-mode IVT (interrupt vector table)'],
+          ['0x00400-0x004FF', 'BIOS data area'],
+          ['0x00500-0x07BFF', 'free (stack lives here at boot)'],
+          ['0x07C00-0x07DFF', 'bootloader: the BIOS loads sector 0 here'],
+          ['0x07E00-0x7FFFF', 'free conventional memory (GDT @0x7E00 here)'],
+          ['0x80000-0x9FFFF', 'EBDA (extended BIOS data area)'],
+          ['0xA0000-0xBFFFF', 'video memory (VGA text buffer @0xB8000)'],
+          ['0xC0000-0xFFFFF', 'video BIOS, ROMs, system BIOS (reset @0xFFFF0)'],
+          ['0x100000+      ', 'extended memory: kernel loaded at 1 MiB (needs A20!)'],
+        ];
+        t.print('x86 real-mode memory map (also on the whiteboard)', c.white);
+        rows.forEach(([a, d]) => t.print(`  ${a}  ${d}`, c.fg));
+      },
+
       // ---- low level
       gdt() {
         const entries = [
@@ -688,6 +798,7 @@ export class Terminal {
   flushOne() {
     const [text, color] = this.queue.shift();
     if (text === null) { this.mode = 'shell'; this.dirty = true; return; }
+    if (typeof text === 'function') { text(); return; }
     this.print(text, color);
   }
 

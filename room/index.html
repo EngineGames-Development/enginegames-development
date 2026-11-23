@@ -62,6 +62,10 @@
     #panel .p-ARP { background: #fff0c8; }
     #panel .p-ICMP { background: #eee2ff; }
     #panel i { color: #2a8a46; font-style: normal; }
+    table.sql { border-collapse: collapse; margin: 6px 0; font-size: 13px; }
+    table.sql th, table.sql td { border: 2px solid var(--ink); padding: 2px 8px; text-align: left; white-space: nowrap; }
+    table.sql th { background: var(--yellow); }
+    #focus-hint code { font-size: .85em; }
     #panel-hex { margin: 8px 0 0; padding: 8px; border-radius: 10px; background: var(--ink); color: #c8f7d4; font-size: 11.5px; overflow-x: auto; }
   </style>
   <script type="importmap">
@@ -85,7 +89,7 @@
         <tr><td><kbd>Esc</kbd></td><td>leave the terminal / pause</td></tr>
         <tr><td><kbd>H</kbd></td><td>toggle the help panel</td></tr>
       </table>
-      <div>Start at the <b>CRT monitor</b>: it runs a shell with a real 8-bit CPU emulator (EG-8).<br/>Try <code>help</code>, <code>run knight.asm</code>, <code>entropy</code>, <code>scan</code>, <code>gdt</code>, <code>sniff</code>.</div>
+      <div>Start at the <b>CRT monitor</b>: it runs a shell with a real 8-bit CPU emulator (EG-8).<br/>Try <code>help</code>, <code>run knight.asm</code>, <code>scan</code>, <code>gdt</code>, <code>sql SHOW TABLES</code>, <code>make run</code>.<br/>Also: crack the laptop's crackme, play the arcade, and ask Tux for a joke.</div>
       <p><span class="go">Click to enter</span></p>
       <div class="note">Best on desktop with a keyboard. Serve this folder over http (e.g. <code>python3 -m http.server</code>) because ES modules don't load from file://.</div>
     </div>
@@ -97,18 +101,19 @@
   <div id="stats"></div>
   <div id="hint">H = help</div>
   <div id="help">
-    <b>Things to try</b><br/>Sleeping cat · wall clock · plants<br/>
+    <b>Things to try</b><br/>
     CRT monitor: SecureRustOS shell + EG-8 CPU<br/>
-    Arduino: flash knight.asm to the LEDs<br/>
-    Raspberry Pi: entropy → LEDs<br/>
-    RAM panel: live view of EG-8 memory<br/>
-    Lava lamp: optical entropy (von Neumann + SHA-256)<br/>
-    Server rack: live packet capture<br/>
-    Quarantine: Engine's Antivirus scan<br/>
-    Safe: EngineManager password generator<br/>
-    GPU screen: switch fragment shaders<br/>
-    Robot: EngineBuddy · Bricks: game-dev corner<br/>
-    Books: notes about each one · Switch: lights
+    Laptop: crack the crackme (Ghidra-style view)<br/>
+    Arcade: play Packet Catcher<br/>
+    Bench: oscilloscope + robot arm (EG-8 ports)<br/>
+    PC under the desk: <code>make run</code><br/>
+    Filing cabinet: SQL / MongoDB queries<br/>
+    Corkboard: my projects · Whiteboard: memory map<br/>
+    Arduino / Pi / LEDs · RAM board · lava-lamp RNG<br/>
+    Server + shark plush: packet capture · Telescope: nmap<br/>
+    Virus jar: antivirus scan · Safe: password vault<br/>
+    TV: GPU shaders · Tux: Linux jokes · Robot: EngineBuddy<br/>
+    Bricks, books, cat, clock, plants · Switch: day/night
   </div>
   <div id="focus-hint">Typing into SecureRustOS · press <b>Esc</b> (or click here) to stand up</div>
   <div id="panel">
