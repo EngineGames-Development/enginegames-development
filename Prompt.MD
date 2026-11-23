@@ -131,6 +131,17 @@ signatures, crypto) instead of just reading labels.
 - **Wireshark shark plush** on the server (toggles packet capture) and an **Nmap telescope** pointed out of the window.
 - **Tux plush**: a penguin that hops and tells a Linux joke in a speech bubble each time it is clicked.
 
+### 15. Polish and extras
+- **Quests**: 15 achievements (terminal, CPU, crackme, arcade score, soldering, scan, database, `make run`, entropy, vault,
+  Tux jokes, pet the cat, rubber duck, drone, lights off) with a HUD tracker (`Q`), toast popups and localStorage progress.
+  Finishing all of them gives "ROOT ACCESS GRANTED" and confetti. Terminal `quests`; `buddy hint` names the next quest.
+- **Sound**: synthesized WebAudio effects (keys, beeps, coins, hiss, quack, meow, purr, squeak, drone buzz, ambient hum), mute with `M`.
+- **Touch controls** for phones: left-thumb joystick, right-thumb look, tap to use, on-screen keyboard for the terminal,
+  tap left/right to play the arcade.
+- **Pet the cat** (wakes up, purrs, hearts float up), a **rubber debugging duck** on the CRT, and a **quadcopter drone** that flies
+  a lap around the room from its landing pad (`drone`).
+- README section with a preview image linking to the GitHub Pages build (`room/` is served as-is thanks to `.nojekyll`).
+
 ## Deliverables
 
 ```
@@ -145,4 +156,7 @@ room/js/shaders.js ← CRT, lava lamp, GPU screen and sky shaders
 room/js/props.js   ← laptop, bench, soldering station, arcade, corkboard, cabinet, whiteboard, plushies
 room/js/arcade.js  ← Packet Catcher mini game
 room/js/db.js      ← mini SQL + MongoDB-style query engine
+room/js/audio.js   ← synthesized sound effects
+room/js/quests.js  ← quest / achievement tracker
+room/preview.jpg   ← README preview
 ```

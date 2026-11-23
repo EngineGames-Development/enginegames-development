@@ -8,6 +8,23 @@ I also have a passion for low-level programming, which started when I began buil
 
 ---
 
+# The Engine Room
+
+<a href="https://enginegames-development.github.io/enginegames-development/room/">
+  <img src="room/preview.jpg" alt="The Engine Room: a cartoon 3D room built with three.js" width="100%" />
+</a>
+
+An interactive cartoon 3D room built with **three.js** that is made out of my interests. Walk around (`WASD` + mouse, or touch on a phone) and use things with `E`:
+
+* **A real 8-bit CPU (EG-8)** with an assembler and disassembler, driving LEDs, a robot arm, an oscilloscope and a live RAM board
+* **SecureRustOS terminal** on a CRT: boot sequence, GDT encoder, memory map, `make run`, SQL / MongoDB queries
+* **Reverse engineering:** a Ghidra-style crackme on the laptop · **Security:** packet capture with real IPv4 checksums, antivirus scan, password vault
+* **Optical entropy** from a lava-lamp shader (von Neumann + SHA-256), a soldering station, a Packet Catcher arcade game, Tux jokes and 15 quests
+
+**[Enter the room](https://enginegames-development.github.io/enginegames-development/room/)** · [source](room) · [design prompt](Prompt.MD)
+
+---
+
 # What I'm Working On
 
 * **Fullstack:** Building my own password manager (work in progress): [EngineManager](https://github.com/EngineGames-Development/EngineManager),

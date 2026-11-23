@@ -129,8 +129,9 @@ const TRIVIA = [
   'Fun fact: The von Neumann extractor turns biased coin flips into fair ones by only keeping 01 and 10 pairs.',
 ];
 
-export function buddyReply(q = '') {
+export function buddyReply(q = '', nextQuest = null) {
   const s = q.toLowerCase();
+  if (nextQuest && /hint|help|what (should|can) i do|quest|bored/.test(s)) return `Next quest: "${nextQuest[1]}". ${nextQuest[2].replace(/`/g, '')}.`;
   for (const [re, a] of BUDDY) if (re.test(s)) return a;
   return TRIVIA[Math.floor(Math.random() * TRIVIA.length)];
 }
@@ -211,6 +212,7 @@ export class Terminal {
   }
 
   boot() {
+    this.sys.sound?.('bootBeep');
     this.lines = [];
     this.mode = 'boot';
     const c = COLORS;
@@ -331,7 +333,7 @@ export class Terminal {
     this.histIdx = this.history.length;
     const [cmd, ...args] = trimmed.split(/\s+/);
     const fn = this.commands()[cmd];
-    if (!fn) { this.print(`${cmd}: command not found (try 'help')`, COLORS.red); return; }
+    if (!fn) { this.print(`${cmd}: command not found (try 'help')`, COLORS.red); this.sys.sound?.('error'); return; }
     try {
       await fn.call(this, args, trimmed.slice(cmd.length).trim());
     } catch (err) {
@@ -414,7 +416,7 @@ export class Terminal {
           ['reversing', 'strings <f>  load <f.bin|f.asm>  crackme <password>   (start: cat ~/re/README.txt)'],
           ['security', 'scan  entropy [n]  vault gen [len]  vault hash <txt>  nmap  sniff [n]'],
           ['database', 'sql <SELECT ...|SHOW TABLES|DESCRIBE t>   mongo db.<coll>.find({...})'],
-          ['room', 'buddy <question>  gpu [mode]  lights  lamp <hue>  arm <base> <shoulder> <claw>  solder on|off  exit'],
+          ['room', 'quests  buddy <question>  gpu [mode]  lights  lamp <hue>  arm <b> <s> <c>  solder on|off  drone  exit'],
         ];
         t.print('SecureRustOS shell - available commands:', c.white);
         for (const [g, cmds] of groups) t.print(`  ${g.padEnd(10)} ${cmds}`, c.fg);
@@ -607,14 +609,17 @@ export class Terminal {
         t.print(`[crackme.bin] input @0x${hex(CRACKME_INPUT)} = "${rest}"  (${steps} instructions)`, c.dim);
         const ok = out.startsWith('ACCESS GRANTED');
         t.print(out.trim() || '(no output)', ok ? c.fg : c.red);
+        if (!ok) sys.sound?.('error');
         if (ok) { t.print('*** Cracked! You reversed the XOR-0x5A check. ***', c.purple); sys.onCracked?.(); }
       },
       sql(_, rest) {
         if (!rest) throw new Error("usage: sql SELECT name, lang FROM projects WHERE lang = 'Rust'   (or SHOW TABLES)");
+        sys.emit?.('sql');
         formatTable(runSQL(rest)).forEach((l) => t.print(l, l.startsWith('+') ? c.dim : c.fg));
       },
       mongo(_, rest) {
         if (!rest) throw new Error('usage: mongo db.projects.find({lang: "Python"})');
+        sys.emit?.('sql');
         const res = runMongo(rest);
         res.forEach((l) => t.print(l, c.fg));
         if (!res.length) t.print('(no documents)', c.dim);
@@ -630,6 +635,17 @@ export class Terminal {
         if (!st) throw new Error('soldering station not found');
         t.print(`soldering station: ${st.on ? 'ON' : 'OFF'}  tip ${Math.round(st.temp)} °C  joints ${st.joints}/8`, c.amber);
         if (!args[0]) t.print('usage: solder on | off', c.dim);
+      },
+      quests() {
+        const q = sys.quests?.();
+        if (!q) throw new Error('quest system offline');
+        t.print(`Quests ${q.done.size}/${q.lines().length}   (press Q outside the terminal for the checklist)`, c.white);
+        q.lines().forEach((l) => t.print(l, l.startsWith('[x]') ? c.fg : c.dim));
+        const next = q.next();
+        if (next) t.print(`next up: ${next[1]}: ${next[2].replace(/`/g, '')}`, c.amber);
+      },
+      drone() {
+        t.print(sys.launchDrone?.() ? '[pad] quadcopter armed... takeoff!' : 'drone: already flying (look up!)', c.cyan);
       },
       make(args) {
         const run = args[0] === 'run';
@@ -649,7 +665,7 @@ export class Terminal {
           L('dd if=build/boot.bin of=securerust.img conv=notrunc  ->  securerust.img (1.44 MB)', c.white, 260),
           L(run ? 'qemu-system-i386 -drive format=raw,file=securerust.img -serial stdio' : 'build OK. `make run` to boot it.', run ? c.white : c.cyan, 700),
           [() => sys.onBuild?.(false), null, 0],
-          run ? [() => t.boot(), null, 0] : [null, null, 0],
+          run ? [() => { sys.emit?.('make'); sys.sound?.('success'); t.boot(); }, null, 0] : [null, null, 0],
         ]);
       },
       memmap() {
@@ -750,6 +766,7 @@ export class Terminal {
         sys.onScan?.(found.length);
       },
       entropy(args) {
+        sys.emit?.('entropy');
         const n = Math.min(Math.max(parseInt(args[0] ?? '32', 10) || 32, 1), 256);
         const s = sys.pool.stats;
         const bytes = sys.pool.bytes(n);
@@ -762,6 +779,7 @@ export class Terminal {
         if (args[0] === 'gen') {
           const len = Math.min(Math.max(parseInt(args[1] ?? '20', 10) || 20, 8), 64);
           const pw = generatePassword(sys.pool, len);
+          sys.emit?.('vault');
           t.print(pw, c.amber);
           t.print(`${len} chars over 94 symbols = ${(len * Math.log2(94)).toFixed(1)} bits of entropy`, c.dim);
         } else if (args[0] === 'hash') {
@@ -787,7 +805,7 @@ export class Terminal {
       },
 
       // ---- room
-      buddy(_, rest) { t.print('EngineBuddy: ' + buddyReply(rest), c.purple); },
+      buddy(_, rest) { t.print('EngineBuddy: ' + buddyReply(rest, sys.quests?.()?.next()), c.purple); },
       gpu(args) { const m = sys.setGpuMode(args[0]); t.print(`GPU screen shader: ${m}`, c.cyan); },
       lights() { const on = sys.toggleLights(); t.print(`room lights ${on ? 'on' : 'off'}`, c.cyan); },
     };

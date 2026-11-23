@@ -10,6 +10,8 @@ import { Terminal, buddyReply, generatePassword } from './terminal.js';
 import { randomFrame, decode, hexdump } from './net.js';
 import { crtMaterial, lavaMaterial, gpuMaterial, skyMaterial, GPU_MODES } from './shaders.js';
 import { buildExtras } from './props.js';
+import { Sfx } from './audio.js';
+import { Quests } from './quests.js';
 
 // canvas signs and posters use the Fredoka web font: wait for it (but never longer than 2.5 s)
 try {
@@ -159,6 +161,16 @@ function sign(lines, { w = 0.6, h = 0.14, px = 1024, ...style } = {}) {
   return m;
 }
 
+// ------------------------------------------------------------------ sound + quests
+
+const sfx = new Sfx();
+let quests = null; // created once the HUD exists
+function emit(ev) {
+  if (!quests) return;
+  if (ev === 'tux') quests.bump('tux', 3);
+  else quests.unlock(ev);
+}
+
 // ------------------------------------------------------------------ systems
 
 const cpu = new CPU();
@@ -186,6 +198,10 @@ const sys = {
   onCracked: () => extras?.onCracked(),
   onBuild: (on) => extras?.setBuilding(on),
   solder: (cmd) => extras?.solder(cmd),
+  emit: (ev) => emit(ev),
+  sound: (name) => sfx[name]?.(),
+  launchDrone: () => extras?.launchDrone(),
+  quests: () => quests,
 };
 let extras = null; // built further down (props.js)
 const terminal = new Terminal(sys);
@@ -392,6 +408,45 @@ const screenGlow = new THREE.PointLight(0x66ffaa, 0.5, 1.8, 2);
 screenGlow.position.set(0, 0.36, 0.5);
 monitor.add(screenGlow);
 interact(monitor, '[E] Use the SecureRustOS terminal', () => enterFocus(termFocus));
+
+// rubber debugging duck sitting on the CRT
+const duck = new THREE.Group();
+duck.position.set(0.2, 0.62, 0.08);
+duck.rotation.y = -0.3;
+monitor.add(duck);
+const duckYellow = mat(0xffd43b);
+const duckBody = ball(0.05, duckYellow, 0, 0.035, 0, duck, 18);
+duckBody.scale.set(1.15, 0.8, 1.3);
+ball(0.034, duckYellow, 0, 0.09, 0.03, duck, 16);
+const duckBeak = ball(0.018, mat(C.orange), 0, 0.085, 0.064, duck, 10);
+duckBeak.scale.set(1.3, 0.5, 1.2);
+for (const side of [-1, 1]) ball(0.007, mat(C.ink), side * 0.016, 0.1, 0.057, duck, 8);
+const duckTail = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.04, 8), duckYellow);
+duckTail.position.set(0, 0.06, -0.065);
+duckTail.rotation.x = -0.9;
+duck.add(duckTail);
+const DUCK_TIPS = [
+  'Have you tried printing the registers? (<code>regs</code>)',
+  'Read the error message again. Slowly. Out loud. To me.',
+  'Is the bug in the code, or in your assumptions?',
+  'What changed since it last worked? (<code>history</code>)',
+  'Step through it one instruction at a time: <code>step 5</code>.',
+  'Off-by-one? Check your loop bounds.',
+  'Did you enable the A20 line? It is always the A20 line.',
+  'Explain it to me line by line... see? You found it yourself.',
+];
+let duckSquash = 0;
+animated.push((t, dt) => {
+  duckSquash = Math.max(0, duckSquash - dt * 3);
+  const sq = Math.sin(duckSquash * Math.PI) * 0.25;
+  duck.scale.set(1 + sq, 1 - sq, 1 + sq);
+});
+interact(duck, '[E] Rubber duck: explain your bug', () => {
+  duckSquash = 1;
+  sfx.quack();
+  emit('duck');
+  showInfo('Rubber duck', 'Quack! ' + DUCK_TIPS[Math.floor(Math.random() * DUCK_TIPS.length)]);
+});
 
 // keyboard with instanced keys that flash when you type
 const keyboard = new THREE.Group();
@@ -734,6 +789,7 @@ const lavaLight = new THREE.PointLight(0xff66cc, 1.2, 2.2, 2);
 lavaLight.position.set(-1.95, 1.05, -3.35);
 scene.add(lavaLight);
 interact(lavaLamp, '[E] Lava lamp: optical entropy source', () => {
+  emit('entropy');
   const b = pool.bytes(16);
   const s = pool.stats;
   showInfo('Optical entropy', `Fresh bytes: <code>${Array.from(b).map((x) => hex(x)).join(' ')}</code><br>
@@ -1022,6 +1078,8 @@ box(0.1, 0.15, 0.02, mat(0xffffff), 0, 0, 0, lightSwitch, 0.01);
 const toggle = box(0.035, 0.06, 0.025, mat(C.yellow), 0, 0.02, 0.015, lightSwitch, 0.008);
 function toggleLights() {
   lightsOn = !lightsOn;
+  sfx.switchClick();
+  if (!lightsOn) emit('night');
   ceilingLight.intensity = lightsOn ? 4 : 0;
   pendantBulb.material.emissiveIntensity = lightsOn ? 1 : 0.1;
   sun.intensity = lightsOn ? 2.2 : 0.25;
@@ -1093,6 +1151,8 @@ animated.push((t) => {
   for (const { p } of vEyes) p.position.x = angry ? Math.sin(t * 2.5) * 0.008 : 0;
 });
 function onScan(threats) {
+  emit('scan');
+  sfx.success();
   avState = 'clean';
   virusMat.color.set(0x8fd0ff);
   qLight.color.set(0x66ccff);
@@ -1142,6 +1202,8 @@ animated.push((t, dt) => {
   if (safeTarget && (safeTimer -= dt) <= 0) safeTarget = 0;
 });
 interact(safe, '[E] EngineManager vault: generate a password', () => {
+  emit('vault');
+  sfx.coin();
   safeTarget = 1;
   safeTimer = 8;
   const pw = generatePassword(pool, 20);
@@ -1231,6 +1293,7 @@ scene.add(cat);
 const fur = mat(C.orange), furLight = mat(0xffd2a0);
 const catBody = ball(0.16, fur, 0, 0, 0, cat, 20);
 catBody.scale.set(1.3, 0.7, 0.9);
+const catLids = [], catEyes = [];
 const catHead = new THREE.Group();
 catHead.position.set(0.19, 0.02, 0.06);
 cat.add(catHead);
@@ -1244,6 +1307,11 @@ for (const side of [-1, 1]) {
   catHead.add(ear);
   const lid = box(0.006, 0.006, 0.035, mat(C.ink), 0.095, 0.02, side * 0.035, catHead, 0.002); // closed eyes
   lid.rotation.y = side * 0.4;
+  catLids.push(lid);
+  const eye = ball(0.02, mat(0x9be15d), 0.088, 0.022, side * 0.036, catHead, 12); // open eyes (hidden while asleep)
+  ball(0.009, mat(C.ink), 0.016, 0, 0, eye, 8).scale.set(0.6, 1.4, 1);
+  eye.visible = false;
+  catEyes.push(eye);
 }
 ball(0.012, mat(C.pink), 0.1, -0.005, 0, catHead, 8);
 const tail = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.03, 10, 24, Math.PI * 1.1), fur);
@@ -1264,14 +1332,50 @@ const zzz = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.15), new THREE.MeshBas
 }));
 zzz.material.userData = { ...noOutline };
 scene.add(zzz);
-animated.push((t) => {
-  catBody.scale.y = 0.7 + Math.sin(t * 1.8) * 0.03;
-  catHead.position.y = 0.02 + Math.sin(t * 1.8) * 0.006;
-  tail.rotation.z = Math.sin(t * 1.2) * 0.15;
+const heartTex = canvasTexture(128, 128, (g) => {
+  g.fillStyle = '#ff5c8a'; g.strokeStyle = '#2b2340'; g.lineWidth = 10;
+  g.beginPath(); g.moveTo(64, 110); g.bezierCurveTo(-10, 60, 20, -5, 64, 35); g.bezierCurveTo(108, -5, 138, 60, 64, 110); g.closePath();
+  g.fill(); g.stroke();
+});
+const hearts = [];
+let catAwake = 0;
+animated.push((t, dt) => {
+  const awake = catAwake > 0;
+  catAwake = Math.max(0, catAwake - dt);
+  catBody.scale.y = 0.7 + Math.sin(t * (awake ? 6 : 1.8)) * 0.03;
+  catHead.position.y += ((awake ? 0.08 : 0.02 + Math.sin(t * 1.8) * 0.006) - catHead.position.y) * Math.min(1, dt * 6);
+  catHead.rotation.z += ((awake ? 0.35 + Math.sin(t * 3) * 0.1 : 0) - catHead.rotation.z) * Math.min(1, dt * 6);
+  tail.rotation.z = Math.sin(t * (awake ? 6 : 1.2)) * (awake ? 0.4 : 0.15);
+  catLids.forEach((l) => { l.visible = !awake; });
+  catEyes.forEach((e) => { e.visible = awake; });
+  zzz.visible = !awake;
   zzz.position.set(2.0, 1.0 + ((t * 0.15) % 0.25), 1.45);
   zzz.lookAt(camera.position);
+  for (let i = hearts.length - 1; i >= 0; i--) {
+    const h = hearts[i];
+    h.m.position.y += dt * 0.35;
+    h.m.position.x += Math.sin(t * 4 + h.ph) * dt * 0.1;
+    h.m.lookAt(camera.position);
+    h.m.scale.setScalar(Math.min(1, h.life));
+    if ((h.life -= dt) <= 0) { scene.remove(h.m); hearts.splice(i, 1); }
+  }
 });
-interact(cat, 'Cat (sleeping)', () => showInfo('cat', '<code>cat: /dev/cat: Resource temporarily unavailable</code><br>Purrr. Interrupts are masked. Try again later.'));
+interact(cat, '[E] Pet the cat', () => {
+  const wasAwake = catAwake > 0;
+  catAwake = 4.5;
+  emit('cat');
+  if (!wasAwake) sfx.meow();
+  sfx.purr(2.5);
+  for (let i = 0; i < 5; i++) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.09), new THREE.MeshBasicMaterial({ map: heartTex, alphaTest: 0.5 }));
+    m.material.userData = { ...noOutline };
+    m.userData.noHit = true;
+    m.position.set(1.95 + (Math.random() - 0.5) * 0.3, 0.9 + Math.random() * 0.15, 1.55 + (Math.random() - 0.5) * 0.3);
+    scene.add(m);
+    hearts.push({ m, life: 1.6 + Math.random() * 0.8, ph: Math.random() * 6 });
+  }
+  showInfo('cat', wasAwake ? 'Purrrrrrr. (IRQ acknowledged.)' : '<code>cat: woke up from interrupt</code><br>Mrrp! Purrrr. The cat accepts your pets, then goes straight back to sleep.');
+});
 interact(beanBag, 'Bean bag', () => showInfo('Bean bag', 'Prime thinking spot. Occupied by the cat, as usual.'));
 
 // ------------------------------------------------------------------ EngineBuddy robot
@@ -1314,8 +1418,8 @@ animated.push((t) => {
   antennaTip.material.emissiveIntensity = 0.6 + Math.sin(t * 4) * 0.4;
 });
 interact(buddy, '[E] Talk to EngineBuddy', () => {
-  const topics = ['hello', 'what is a gdt', 'a20', 'entropy', 'paging', 'boot', 'rust', 'virus', 'vulkan', 'packet', 'cpu', ''];
-  showInfo('EngineBuddy', escapeHtml(buddyReply(topics[Math.floor(Math.random() * topics.length)])) + '<br><small>Ask anything in the terminal: <code>buddy &lt;question&gt;</code></small>', 9000);
+  const topics = ['hint', 'hint', 'hello', 'what is a gdt', 'a20', 'entropy', 'paging', 'boot', 'rust', 'virus', 'vulkan', 'packet', 'cpu', ''];
+  showInfo('EngineBuddy', escapeHtml(buddyReply(topics[Math.floor(Math.random() * topics.length)], quests?.next())) + '<br><small>Ask anything in the terminal: <code>buddy &lt;question&gt;</code></small>', 9000);
 });
 
 // ------------------------------------------------------------------ extra interest-themed objects
@@ -1324,6 +1428,7 @@ extras = buildExtras({
   scene, camera, C, mat, glow, basic, box, cyl, ball, sign, canvasTexture, interact, collide, animated,
   showInfo: (...a) => showInfo(...a), enterFocus: (t) => enterFocus(t), toggleCapture: () => toggleCapture(),
   terminal, cpu, deskTopY, noOutline, gradientMap, getLeds: () => ledState,
+  sfx, emit,
 });
 
 // ------------------------------------------------------------------ HUD
@@ -1331,6 +1436,18 @@ extras = buildExtras({
 const $ = (id) => document.getElementById(id);
 const overlay = $('overlay'), tooltip = $('tooltip'), crosshair = $('crosshair'), info = $('info');
 const focusHint = $('focus-hint'), stats = $('stats');
+quests = new Quests({
+  list: $('quest-list'), chip: $('quest-chip'), toast: $('toast'),
+  onUnlock: () => sfx.success(),
+  onAllDone: () => {
+    sfx.fanfare();
+    const p = camera.position.clone().add(new THREE.Vector3(0, 0.3, 0).add(new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion)));
+    extras?.burst(p);
+    showInfo('ROOT ACCESS GRANTED', 'You finished every quest in the Engine Room. Thanks for visiting! <code>uid=0(root)</code>', 12000);
+    terminal.print('*** all quests complete: uid=0(root) gid=0(root) groups=0(root) ***', '#c792ea');
+  },
+});
+$('quest-chip').addEventListener('click', () => $('quest-list').classList.toggle('show'));
 let infoTimer = 0;
 function showInfo(title, html, ms = 7000) {
   info.innerHTML = `<h3>${title}</h3><div>${html}</div>`;
@@ -1344,6 +1461,9 @@ function escapeHtml(s) {
 // ------------------------------------------------------------------ controls
 
 const keysDown = new Set();
+const touchMode = window.matchMedia?.('(pointer: coarse)').matches || ('ontouchstart' in window && navigator.maxTouchPoints > 0);
+const touchMove = { x: 0, y: 0 };
+const touchInput = document.getElementById('touch-input');
 let started = false;
 let locked = false;
 let dragLook = false;
@@ -1371,6 +1491,8 @@ function lockPointer() {
 }
 
 overlay.addEventListener('click', () => {
+  sfx.init();
+  if (touchMode) { started = true; overlay.classList.add('hidden'); $('touch-ui').classList.add('show'); return; }
   started = true;
   overlay.classList.add('hidden');
   lockPointer();
@@ -1411,7 +1533,9 @@ window.addEventListener('mouseup', () => {
 });
 
 function use() {
-  if (hovered) hovered.action();
+  if (!hovered) return;
+  sfx.use();
+  hovered.action();
 }
 
 window.addEventListener('keydown', (e) => {
@@ -1424,6 +1548,8 @@ window.addEventListener('keydown', (e) => {
   if (mode !== 'walk') return;
   irq.kbd++;
   keysDown.add(e.code);
+  if (e.code === 'KeyM') { const m = sfx.toggleMute(); showInfo('Sound', m ? 'Sound off. Press <kbd>M</kbd> to turn it back on.' : 'Sound on.', 2000); }
+  if (e.code === 'KeyQ') $('quest-list').classList.toggle('show');
   if (e.code === 'KeyE' && started) use();
   if (e.code === 'KeyH') $('help').classList.toggle('show');
 });
@@ -1448,7 +1574,8 @@ window.addEventListener('paste', async (e) => {
 const termFocus = {
   screen, w: 0.52, h: 0.39,
   hint: 'Typing into SecureRustOS · press <b>Esc</b> (or click here) to stand up',
-  keydown: (e) => { terminal.handleKey(e); flashKey(); },
+  keydown: (e) => { terminal.handleKey(e); flashKey(); sfx.key(); },
+  onEnter: () => emit('terminal'),
 };
 let focus = null;
 
@@ -1487,6 +1614,8 @@ function enterFocus(target = termFocus) {
   crosshair.classList.add('hidden');
   tooltip.classList.remove('show');
   focusHint.innerHTML = target.hint;
+  target.onEnter?.();
+  if (touchMode && target.keydown) { touchInput.value = ''; touchInput.focus({ preventScroll: true }); }
   startTween(pos, q, () => { mode = 'focus'; focusHint.classList.add('show'); });
 }
 function exitFocus() {
@@ -1506,6 +1635,78 @@ function exitFocus() {
 }
 focusHint.addEventListener('click', () => exitFocus());
 
+// ------------------------------------------------------------------ touch controls (phones / tablets)
+// left side: virtual joystick to walk · right side: drag to look · tap: use what you tapped
+const joyBase = $('joy-base'), joyKnob = $('joy-knob');
+let joy = null, lookTouch = null;
+function pickAt(x, y) {
+  raycaster.setFromCamera(new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1), camera);
+  for (const h of raycaster.intersectObjects(scene.children, true)) {
+    if (h.object === jar || h.object === zzz || h.object.userData.noHit) continue;
+    return h.object.userData.interact ?? null;
+  }
+  return null;
+}
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'touch' || !started) return;
+  e.preventDefault();
+  if (mode === 'focus') {
+    if (focus?.keydown) {
+      const k = e.clientX < innerWidth / 2 ? 'ArrowLeft' : 'ArrowRight';
+      focus.keydown({ key: 'Enter', preventDefault() {} });
+      focus.keydown({ key: k, preventDefault() {} });
+      lookTouch = { id: e.pointerId, key: k };
+    }
+    return;
+  }
+  if (e.clientX < innerWidth * 0.4 && !joy) {
+    joy = { id: e.pointerId, x0: e.clientX, y0: e.clientY };
+    joyBase.style.left = `${e.clientX}px`; joyBase.style.top = `${e.clientY}px`;
+    joyKnob.style.transform = 'translate(-50%, -50%)';
+    joyBase.classList.add('show');
+  } else if (!lookTouch) {
+    lookTouch = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: 0, t0: performance.now() };
+  }
+}, { passive: false });
+renderer.domElement.addEventListener('pointermove', (e) => {
+  if (e.pointerType !== 'touch') return;
+  if (joy && e.pointerId === joy.id) {
+    let dx = e.clientX - joy.x0, dy = e.clientY - joy.y0;
+    const len = Math.hypot(dx, dy), max = 55;
+    if (len > max) { dx *= max / len; dy *= max / len; }
+    touchMove.x = dx / max; touchMove.y = dy / max;
+    joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+  } else if (lookTouch && e.pointerId === lookTouch.id && mode === 'walk') {
+    const dx = e.clientX - lookTouch.x, dy = e.clientY - lookTouch.y;
+    lookTouch.moved += Math.abs(dx) + Math.abs(dy);
+    look(dx * 2.2, dy * 2.2);
+    lookTouch.x = e.clientX; lookTouch.y = e.clientY;
+  }
+});
+function endTouch(e) {
+  if (e.pointerType !== 'touch') return;
+  if (joy && e.pointerId === joy.id) { joy = null; touchMove.x = touchMove.y = 0; joyBase.classList.remove('show'); }
+  if (lookTouch && e.pointerId === lookTouch.id) {
+    if (mode === 'focus' && lookTouch.key) focus?.keyup?.({ key: lookTouch.key });
+    else if (mode === 'walk' && lookTouch.moved < 12 && performance.now() - lookTouch.t0 < 350) {
+      const hit = pickAt(e.clientX, e.clientY);
+      if (hit) { hovered = hit; use(); }
+    }
+    lookTouch = null;
+  }
+}
+renderer.domElement.addEventListener('pointerup', endTouch);
+renderer.domElement.addEventListener('pointercancel', endTouch);
+// on-screen keyboard for the terminal: forward typed text as key presses
+touchInput.addEventListener('input', () => {
+  for (const ch of touchInput.value) focus?.keydown?.({ key: ch, preventDefault() {} });
+  touchInput.value = '';
+});
+touchInput.addEventListener('keydown', (e) => {
+  if (['Enter', 'Backspace', 'ArrowUp', 'ArrowDown', 'Tab'].includes(e.key)) { focus?.keydown?.(e); e.preventDefault(); }
+});
+$('touch-use').addEventListener('click', () => { updateHover(); use(); });
+
 const raycaster = new THREE.Raycaster();
 raycaster.far = 3.2;
 const center2 = new THREE.Vector2(0, 0);
@@ -1520,6 +1721,7 @@ function updateWalk(dt) {
   if (keysDown.has('KeyS') || keysDown.has('ArrowDown')) move.sub(forward);
   if (keysDown.has('KeyD') || keysDown.has('ArrowRight')) move.add(right);
   if (keysDown.has('KeyA') || keysDown.has('ArrowLeft')) move.sub(right);
+  if (touchMove.x || touchMove.y) move.addScaledVector(forward, -touchMove.y).addScaledVector(right, touchMove.x);
   if (move.lengthSq() > 0) {
     const speed = keysDown.has('ShiftLeft') || keysDown.has('ShiftRight') ? 4.2 : 2.4;
     move.normalize().multiplyScalar(speed * dt);
@@ -1564,6 +1766,7 @@ function updateHover() {
 // ------------------------------------------------------------------ main loop
 
 const clock = new THREE.Clock();
+let cpuWasHalted = true;
 let fpsAcc = 0, fpsFrames = 0, irqAcc = 0, lastCpuError = null, hoverTick = 0;
 
 function frame() {
@@ -1580,6 +1783,8 @@ function frame() {
   }
   if (mode === 'walk' && ++hoverTick % 3 === 0) updateHover();
 
+  if (!cpu.halted && cpuWasHalted) emit('cpu');
+  cpuWasHalted = cpu.halted;
   cpu.tick(dt * 1000, clockHz);
   if (cpu.error && cpu.error !== lastCpuError) { terminal.print('EG-8 fault: ' + cpu.error, '#ff5c7a'); lastCpuError = cpu.error; }
   if (!cpu.error) lastCpuError = null;

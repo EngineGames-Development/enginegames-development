@@ -10,7 +10,7 @@ import { runSQL } from './db.js';
 import { HOSTS } from './net.js';
 
 export function buildExtras(k) {
-  const { scene, C, mat, glow, basic, box, cyl, ball, sign, canvasTexture, interact, collide, animated, showInfo, terminal, cpu, deskTopY, noOutline, camera } = k;
+  const { scene, C, mat, glow, basic, box, cyl, ball, sign, canvasTexture, interact, collide, animated, showInfo, terminal, cpu, deskTopY, noOutline, camera, sfx, emit } = k;
   const api = {};
   const ink = mat(C.ink);
 
@@ -134,8 +134,11 @@ export function buildExtras(k) {
       if ((c.life -= dt) <= 0) { scene.remove(c.m); confetti.splice(i, 1); }
     }
   });
+  api.burst = burst;
   api.onCracked = () => {
     cracked = true;
+    emit('crack');
+    sfx.fanfare();
     drawRE();
     const p = new THREE.Vector3();
     reScreen.getWorldPosition(p);
@@ -474,14 +477,16 @@ export function buildExtras(k) {
   });
   interact(hands, '[E] Solder the next joint on the board', () => {
     if (sol.joints >= JOINTS) { showInfo('Circuit board', 'All joints are done and the LED works. Shiny cone-shaped joints = good joints!'); return; }
-    if (sol.temp < 300) { showInfo('Too cold!', `The iron is only <b>${Math.round(sol.temp)} °C</b>. Solder melts around 190–220 °C, and you want ~350 °C for good joints. Turn on the station.`); return; }
+    if (sol.temp < 300) { sfx.error(); showInfo('Too cold!', `The iron is only <b>${Math.round(sol.temp)} °C</b>. Solder melts around 190–220 °C, and you want ~350 °C for good joints. Turn on the station.`); return; }
     jointMats[sol.joints].color.set(0xe6ecf5);
+    sfx.hiss();
     const p = new THREE.Vector3();
     pcb.getWorldPosition(p);
     puff(p.add(new THREE.Vector3(0, 0.02, 0)));
     sol.joints++;
     if (sol.joints === JOINTS) {
       boardLedMat.emissiveIntensity = 1.1;
+      emit('solder');
       showInfo('It works!', `All ${JOINTS} joints soldered. The board's LED lights up. Flux smoke smells like victory.`);
       terminal.print('[bench] PCB test: all 8 joints OK, LED on.', '#5ad1ff');
     } else showInfo('Tssss…', `Joint ${sol.joints} of ${JOINTS} soldered.`, 2500);
@@ -490,6 +495,8 @@ export function buildExtras(k) {
   // ================================================================ arcade cabinet: Packet Catcher
   const game = new PacketCatcher();
   api.game = game;
+  game.onSound = (n) => sfx[n]?.();
+  game.onScore = (sc) => { if (sc >= 100) emit('arcade'); };
   const arcadeTex = new THREE.CanvasTexture(game.canvas);
   arcadeTex.colorSpace = THREE.SRGBColorSpace;
   const arcadeMat = crtMaterial(arcadeTex);
@@ -633,6 +640,8 @@ export function buildExtras(k) {
     drawers.push({ d, state });
     interact(d, `[E] Database: ${query}`, () => {
       state.target = 1; state.timer = 6;
+      emit('sql');
+      sfx.whoosh();
       const res = runSQL(query);
       const head = res.columns.map((c) => `<th>${c}</th>`).join('');
       const rows = res.rows.map((r) => `<tr>${res.columns.map((c) => `<td>${String(r[c]).replace(/</g, '&lt;')}</td>`).join('')}</tr>`).join('');
@@ -865,8 +874,99 @@ export function buildExtras(k) {
     drawBubble(JOKES[jokeIdx]);
     bubbleTimer = 6.5;
     hop = 0.8;
+    sfx.squeak();
+    emit('tux');
     terminal.print(`tux: ${JOKES[jokeIdx]}`, '#c792ea');
   });
+
+  // ================================================================ quadcopter drone
+  const pad = new THREE.Group();
+  pad.position.set(-2.9, 0, -2.0);
+  scene.add(pad);
+  const padTex = canvasTexture(256, 256, (g, W, H) => {
+    g.fillStyle = '#2b2340'; g.beginPath(); g.arc(W / 2, H / 2, W / 2, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#ffcd3c'; g.lineWidth = 14; g.beginPath(); g.arc(W / 2, H / 2, W / 2 - 22, 0, Math.PI * 2); g.stroke();
+    g.fillStyle = '#ffcd3c'; g.font = 'bold 150px "Fredoka", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('H', W / 2, H / 2 + 8);
+  });
+  const padMesh = new THREE.Mesh(new THREE.CircleGeometry(0.4, 40), new THREE.MeshToonMaterial({ map: padTex, gradientMap: k.gradientMap, alphaTest: 0.5 }));
+  padMesh.material.userData = { ...noOutline };
+  padMesh.rotation.x = -Math.PI / 2;
+  padMesh.position.y = 0.008;
+  padMesh.receiveShadow = true;
+  pad.add(padMesh);
+
+  const drone = new THREE.Group();
+  scene.add(drone);
+  const droneBody = new THREE.Group();
+  drone.add(droneBody);
+  box(0.16, 0.05, 0.16, mat(C.red), 0, 0, 0, droneBody, 0.02);
+  box(0.09, 0.03, 0.09, mat(0x2b2340), 0, 0.035, 0, droneBody, 0.012);
+  const cam = ball(0.022, mat(C.ink), 0, -0.02, 0.085, droneBody, 10);
+  cam.scale.z = 0.7;
+  const props = [];
+  const droneLeds = [];
+  [[1, 1], [-1, 1], [1, -1], [-1, -1]].forEach(([sx, sz], i) => {
+    const armM = box(0.2, 0.018, 0.022, mat(C.grey), sx * 0.09, 0, sz * 0.09, droneBody, 0.008);
+    armM.rotation.y = sx * sz > 0 ? -Math.PI / 4 : Math.PI / 4;
+    const hub = cyl(0.022, 0.022, 0.04, mat(C.ink), sx * 0.15, 0.015, sz * 0.15, droneBody, 12);
+    const rotor = new THREE.Group();
+    rotor.position.set(sx * 0.15, 0.04, sz * 0.15);
+    droneBody.add(rotor);
+    box(0.17, 0.004, 0.02, mat(0xffffff), 0, 0, 0, rotor, 0.002);
+    props.push(rotor);
+    const led = ball(0.01, new THREE.MeshBasicMaterial({ color: sz > 0 ? 0x44ff66 : 0xff4466 }), sx * 0.15, -0.012, sz * 0.15, droneBody, 8);
+    led.material.userData = { ...noOutline };
+    droneLeds.push(led);
+    hub.castShadow = true;
+  });
+  for (const sx of [-1, 1]) box(0.012, 0.04, 0.14, mat(C.ink), sx * 0.06, -0.045, 0, droneBody, 0.005); // skids
+  const home = new THREE.Vector3(-2.9, 0.07, -2.0);
+  drone.position.copy(home);
+  const fly = { state: 'idle', t: 0, vel: new THREE.Vector3(), stopBuzz: null };
+  const tmpTarget = new THREE.Vector3(), prevPos = new THREE.Vector3();
+  api.launchDrone = () => {
+    if (fly.state !== 'idle') return false;
+    fly.state = 'takeoff'; fly.t = 0;
+    fly.stopBuzz = sfx.buzz();
+    emit('drone');
+    return true;
+  };
+  animated.push((t, dt) => {
+    const spin = fly.state === 'idle' ? 0 : 60;
+    props.forEach((p, i) => { p.rotation.y += dt * spin * (i % 2 ? 1 : -1); });
+    droneLeds.forEach((l, i) => { l.visible = fly.state === 'idle' || Math.floor(t * 4 + i) % 2 === 0; });
+    if (fly.state === 'idle') return;
+    fly.t += dt;
+    const ORBIT = 14, R = 2.1, cx = 0, cz = 0.3, alt = 2.25;
+    if (fly.state === 'takeoff') {
+      tmpTarget.set(home.x, 1.8, home.z);
+      if (fly.t > 2.2) { fly.state = 'orbit'; fly.t = 0; }
+    } else if (fly.state === 'orbit') {
+      const a = Math.atan2(home.z - cz, home.x - cx) + (fly.t / ORBIT) * Math.PI * 2;
+      tmpTarget.set(cx + Math.cos(a) * R, alt + Math.sin(fly.t * 2.2) * 0.12, cz + Math.sin(a) * R * 0.95);
+      if (fly.t > ORBIT) { fly.state = 'return'; fly.t = 0; }
+    } else if (fly.state === 'return') {
+      tmpTarget.set(home.x, 1.5, home.z);
+      if (fly.t > 2.5) { fly.state = 'land'; fly.t = 0; }
+    } else if (fly.state === 'land') {
+      tmpTarget.copy(home);
+      if (fly.t > 2.2) { fly.state = 'idle'; drone.position.copy(home); droneBody.rotation.set(0, 0, 0); fly.stopBuzz?.(); return; }
+    }
+    prevPos.copy(drone.position);
+    drone.position.lerp(tmpTarget, Math.min(1, dt * (fly.state === 'orbit' ? 2.5 : 1.6)));
+    fly.vel.copy(drone.position).sub(prevPos).divideScalar(Math.max(dt, 1e-3));
+    // bank into the direction of travel
+    droneBody.rotation.x += (THREE.MathUtils.clamp(fly.vel.z * 0.25, -0.4, 0.4) - droneBody.rotation.x) * Math.min(1, dt * 5);
+    droneBody.rotation.z += (THREE.MathUtils.clamp(-fly.vel.x * 0.25, -0.4, 0.4) - droneBody.rotation.z) * Math.min(1, dt * 5);
+    drone.rotation.y += dt * 0.6;
+  });
+  interact(drone, '[E] Quadcopter: launch!', () => {
+    if (api.launchDrone()) showInfo('Quadcopter', 'Takeoff! Four brushless motors, a flight controller doing PID loops at 1 kHz, and a tiny camera. It flies a lap around the room and lands back on its pad.');
+    else showInfo('Quadcopter', 'Already in the air. Look up!');
+  });
+  interact(pad, '[E] Quadcopter: launch!', () => { if (api.launchDrone()) showInfo('Quadcopter', 'Takeoff!'); });
+  collide(-3.15, -2.65, -2.25, -1.75);
 
   return api;
 }

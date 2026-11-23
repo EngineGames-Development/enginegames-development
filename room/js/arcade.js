@@ -13,6 +13,8 @@ export class PacketCatcher {
     this.best = 0;
     try { this.best = Number(localStorage.getItem('packetCatcherBest')) || 0; } catch { /* storage may be blocked */ }
     this.state = 'title';
+    this.onSound = null; // (name) => void, set by the room
+    this.onScore = null; // (score) => void
     this.t = 0;
     this.stars = Array.from({ length: 40 }, () => ({ x: Math.random() * W, y: Math.random() * H, s: 1 + Math.random() * 2 }));
     this.reset();
@@ -33,7 +35,7 @@ export class PacketCatcher {
   keydown(e) {
     const k = e.key;
     if (k === 'Enter' || k === ' ') {
-      if (this.state !== 'play') { this.reset(); this.state = 'play'; }
+      if (this.state !== 'play') { this.reset(); this.state = 'play'; this.onSound?.('use'); }
       e.preventDefault?.();
       return;
     }
@@ -62,14 +64,15 @@ export class PacketCatcher {
       const padY = H - 70;
       this.items = this.items.filter((it) => {
         if (it.y > padY - 18 && it.y < padY + 14 && Math.abs(it.x - this.x) < 62) {
-          if (it.kind === 'bug') { this.lives--; this.shake = 0.3; this.pop(it.x, it.y, '-1 ♥', '#ff5c7a'); }
-          else { const p = it.kind === 'key' ? 50 : 10; this.score += p; this.pop(it.x, it.y, `+${p}`, it.kind === 'key' ? '#ffcd3c' : '#55e07a'); }
+          if (it.kind === 'bug') { this.lives--; this.shake = 0.3; this.pop(it.x, it.y, '-1 ♥', '#ff5c7a'); this.onSound?.('hurt'); }
+          else { const p = it.kind === 'key' ? 50 : 10; this.score += p; this.pop(it.x, it.y, `+${p}`, it.kind === 'key' ? '#ffcd3c' : '#55e07a'); this.onSound?.(it.kind === 'key' ? 'coin' : 'click'); this.onScore?.(this.score); }
           return false;
         }
         return it.y < H + 30;
       });
       if (this.lives <= 0) {
         this.state = 'over';
+        this.onSound?.('error');
         if (this.score > this.best) {
           this.best = this.score;
           try { localStorage.setItem('packetCatcherBest', String(this.best)); } catch { /* ignore */ }
