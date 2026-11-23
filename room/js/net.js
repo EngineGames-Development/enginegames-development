@@ -94,6 +94,15 @@ export function randomFrame() {
   return ethernet(a.mac, b.mac, 0x0800, ipv4(a.ip, b.ip, 6, tcp(49152 + rnd(16000), dport, flags, rnd(2 ** 31), rnd(2 ** 31), data)));
 }
 
+// CTF: a login over plain HTTP. The password is a flag, readable in the hexdump.
+export const PCAP_FLAG = 'flag{sn1ff3d_th3_w1r3}';
+export function loginFrame() {
+  const a = HOSTS[0], b = HOSTS[3];
+  const body = `POST /login HTTP/1.1\r\nHost: rack-srv01\r\n\r\nuser=engine&pass=${PCAP_FLAG}`;
+  const data = [...body].map((c) => c.charCodeAt(0));
+  return ethernet(a.mac, b.mac, 0x0800, ipv4(a.ip, b.ip, 6, tcp(51515, 80, 0x18, 0x1000, 0x2000, data)));
+}
+
 const ip = (b, o) => `${b[o]}.${b[o + 1]}.${b[o + 2]}.${b[o + 3]}`;
 const r16 = (b, o) => (b[o] << 8) | b[o + 1];
 
@@ -127,6 +136,10 @@ export function decode(f) {
   }
   const sp = r16(f, p), dp = r16(f, p + 2);
   const flags = tcpFlags(f[p + 13]);
+  const payload = f.slice(p + 20);
+  if (payload.length >= 4 && String.fromCharCode(...payload.slice(0, 4)) === 'POST') {
+    return { proto: 'HTTP', src, dst, info: 'POST /login HTTP/1.1  (credentials in clear text!)', ok, login: true };
+  }
   const svc = SERVICES[dp] ?? dp;
   return { proto: 'TCP', src, dst, info: `${sp} → ${dp} (${svc}) [${flags}] Win=${r16(f, p + 14)}`, ok };
 }

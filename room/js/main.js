@@ -7,9 +7,10 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { CPU, hex } from './cpu.js';
 import { EntropyPool } from './entropy.js';
 import { Terminal, buddyReply, generatePassword } from './terminal.js';
-import { randomFrame, decode, hexdump } from './net.js';
+import { randomFrame, decode, hexdump, loginFrame } from './net.js';
 import { crtMaterial, lavaMaterial, gpuMaterial, skyMaterial, GPU_MODES } from './shaders.js';
 import { buildExtras } from './props.js';
+import { buildMore } from './props2.js';
 import { Sfx } from './audio.js';
 import { Quests } from './quests.js';
 
@@ -22,12 +23,14 @@ try {
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-renderer.setSize(window.innerWidth, window.innerHeight);
+const stageEl = document.getElementById('stage');
+const stageSize = () => [Math.max(1, stageEl.clientWidth), Math.max(1, stageEl.clientHeight)];
+renderer.setSize(...stageSize(), false);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.NoToneMapping;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-document.body.appendChild(renderer.domElement);
+stageEl.prepend(renderer.domElement);
 
 // black cartoon outlines around everything (inverted hull)
 const outline = new OutlineEffect(renderer, { defaultThickness: 0.0035, defaultColor: [0.11, 0.07, 0.14], defaultAlpha: 1, defaultKeepAlive: true });
@@ -35,7 +38,7 @@ const outline = new OutlineEffect(renderer, { defaultThickness: 0.0035, defaultC
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x2b2340);
 
-const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.02, 50);
+const camera = new THREE.PerspectiveCamera(70, stageSize()[0] / stageSize()[1], 0.02, 50);
 camera.position.set(0, 1.6, 2.6);
 camera.rotation.order = 'YXZ';
 
@@ -202,8 +205,14 @@ const sys = {
   sound: (name) => sfx[name]?.(),
   launchDrone: () => extras?.launchDrone(),
   quests: () => quests,
+  onFlag: (found) => more?.onFlag(found),
+  train: (reset) => more?.train(reset),
+  predict: (a, b) => more?.predict(a, b),
+  matrixText: (txt) => more?.matrixText(txt),
+  startPrint: () => more?.startPrint(),
 };
 let extras = null; // built further down (props.js)
+let more = null;   // props2.js
 const terminal = new Terminal(sys);
 
 cpu.ports.out = (port, v) => {
@@ -212,6 +221,7 @@ cpu.ports.out = (port, v) => {
   else if (port === 0x02) terminal.print(String(v), '#ffb347');
   else if (port === 0x20) setLampHue(v);
   else if (port >= 0x30 && port <= 0x32) extras?.setArmPort(port, v);
+  else if (port === 0x50 || port === 0x51) more?.matrixPort(port, v);
 };
 cpu.ports.in = (port) => (port === 0x10 ? pool.byte() : 0);
 
@@ -632,6 +642,7 @@ const paperOnFloor = new THREE.Mesh(new THREE.IcosahedronGeometry(0.055, 0), cre
 paperOnFloor.position.set(1.9, 0.05, -3.2);
 scene.add(paperOnFloor);
 collide(1.4, 1.8, -3.75, -3.35);
+interact(paperOnFloor, 'Crumpled paper', () => showInfo('Crumpled paper', 'You unfold it. Someone wrote a note to themselves:<br><code>flag{d0nt_thr0w_s3cr3ts_4w4y}</code><br><small>Submit it in the terminal: <code>submit flag{...}</code></small>'));
 interact(bin, 'Trash: core_dump_*.txt', () => showInfo('Trash can', '12 crumpled printouts of <code>core_dump.txt</code>, 3 attempts at writing a memory allocator, and one that missed.'));
 
 // ------------------------------------------------------------------ RAM board (EG-8 memory visualizer)
@@ -816,24 +827,60 @@ function sampleEntropy() {
   pool.feedPixels(sensorBuf);
 }
 
-// potted plants
+// potted plants: rounded pot, soil sunk below the rim (no overlapping faces), leaf-shaped leaves on stems
+const leafGeo = (() => {
+  const sh = new THREE.Shape();
+  sh.moveTo(0, 0);
+  sh.quadraticCurveTo(0.075, 0.1, 0.012, 0.25);
+  sh.quadraticCurveTo(0, 0.27, -0.012, 0.25);
+  sh.quadraticCurveTo(-0.075, 0.1, 0, 0);
+  const g = new THREE.ExtrudeGeometry(sh, { depth: 0.006, bevelEnabled: true, bevelThickness: 0.004, bevelSize: 0.004, bevelSegments: 2, curveSegments: 10 });
+  g.translate(0, 0, -0.003);
+  return g;
+})();
+const potMat = mat(C.orange), potRimMat = mat(0xe8822a), soilMat = mat(0x5a3418, { outline: false });
+const leafMats = [mat(C.green), mat(0x3fa556), mat(0x6fd06a)];
+const stemMat = mat(0x3f8f4a, { outline: false });
 function plant(x, z, s = 1) {
   const g = new THREE.Group();
   g.position.set(x, 0, z);
   g.scale.setScalar(s);
   scene.add(g);
-  cyl(0.2, 0.15, 0.36, mat(C.orange), 0, 0.18, 0, g, 20);
-  cyl(0.215, 0.215, 0.06, mat(0xe8822a), 0, 0.36, 0, g, 20);
-  cyl(0.19, 0.19, 0.02, mat(0x5a3418, { outline: false }), 0, 0.38, 0, g, 20);
-  const leaf = mat(C.green), leafDark = mat(0x3fa556);
-  for (let i = 0; i < 7; i++) {
-    const a = (i / 7) * Math.PI * 2;
-    const l = ball(0.13, i % 2 ? leaf : leafDark, Math.cos(a) * 0.12, 0.62 + (i % 3) * 0.12, Math.sin(a) * 0.12, g, 14);
-    l.scale.set(0.7, 1.4, 0.35);
-    l.rotation.set(Math.sin(a) * 0.6, -a, Math.cos(a) * 0.6);
+  cyl(0.19, 0.14, 0.34, potMat, 0, 0.17, 0, g, 28);                 // pot body, top at 0.34
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.028, 12, 36), potRimMat);
+  rim.rotation.x = Math.PI / 2;
+  rim.position.y = 0.345;
+  rim.castShadow = true;
+  g.add(rim);
+  const soil = new THREE.Mesh(new THREE.CircleGeometry(0.175, 28), soilMat); // flat disc just under the rim
+  soil.rotation.x = -Math.PI / 2;
+  soil.position.y = 0.33;
+  g.add(soil);
+  const leaves = new THREE.Group();
+  leaves.position.y = 0.33;
+  g.add(leaves);
+  const N = 13;
+  for (let i = 0; i < N; i++) {
+    const a = i * 2.39996; // golden angle: leaves spread evenly around the pot
+    const inner = i < 4;
+    const tilt = inner ? 0.08 + i * 0.07 : 0.32 + (i % 3) * 0.13;
+    const len = inner ? 1.55 - i * 0.05 : 1.15 + (i % 4) * 0.1;
+    const stalk = new THREE.Group();
+    stalk.rotation.y = a;
+    leaves.add(stalk);
+    const tiltG = new THREE.Group();
+    tiltG.rotation.x = tilt;
+    stalk.add(tiltG);
+    const stem = cyl(0.006, 0.008, 0.16 * len, stemMat, 0, 0.08 * len, 0, tiltG, 6);
+    stem.castShadow = false;
+    const leaf = new THREE.Mesh(leafGeo, leafMats[i % 3]);
+    leaf.position.y = 0.15 * len;
+    leaf.rotation.x = 0.25;
+    leaf.scale.setScalar(len);
+    leaf.castShadow = true;
+    tiltG.add(leaf);
   }
-  ball(0.12, leaf, 0, 0.95, 0, g, 14).scale.set(0.7, 1.2, 0.7);
-  animated.push((t) => { g.rotation.z = Math.sin(t * 0.8 + x) * 0.015; });
+  animated.push((t) => { leaves.rotation.z = Math.sin(t * 0.8 + x) * 0.03; leaves.rotation.x = Math.cos(t * 0.6 + z) * 0.02; });
   collide(x - 0.25 * s, x + 0.25 * s, z - 0.25 * s, z + 0.25 * s);
   return g;
 }
@@ -883,7 +930,7 @@ interact(rack, '[E] Server: toggle live packet capture', () => toggleCapture());
 const panel = document.getElementById('panel');
 const panelList = document.getElementById('panel-list');
 const panelHex = document.getElementById('panel-hex');
-let captureTimer = 0, captureNo = 0;
+let captureTimer = 0, captureNo = 0, lastLogin = 0;
 const captureRows = [];
 function toggleCapture(force) {
   captureOn = force ?? !captureOn;
@@ -895,14 +942,17 @@ animated.push((t, dt) => {
   captureTimer += dt;
   if (captureTimer < 0.35) return;
   captureTimer = 0;
-  const f = randomFrame();
+  captureNo++;
+  const f = captureNo % 10 === 4 ? loginFrame() : randomFrame();
   const d = decode(f);
   irq.nic++;
-  captureNo++;
   captureRows.push(`<div class="row p-${d.proto}"><span>${captureNo}</span><span>${t.toFixed(3)}</span><span>${d.src}</span><span>${d.dst}</span><span>${d.proto}</span><span>${d.info}${d.ok ? ' <i>✓ cksum</i>' : ' <b>bad cksum</b>'}</span></div>`);
   if (captureRows.length > 14) captureRows.shift();
   panelList.innerHTML = captureRows.join('');
-  panelHex.textContent = hexdump(f, 80).join('\n');
+  if (d.login || !lastLogin || captureNo - lastLogin > 6) {
+    panelHex.textContent = hexdump(f, d.login ? 256 : 80).join('\n');
+    if (d.login) lastLogin = captureNo;
+  }
 });
 
 // ------------------------------------------------------------------ GPU shader TV
@@ -926,7 +976,7 @@ box(0.02, 0.2, 0.6, woodDark, 4.52, 0.25, 0.32, scene, 0.008);
 box(0.02, 0.2, 0.6, woodDark, 4.52, 0.25, 1.08, scene, 0.008);
 const consoleBox = box(0.3, 0.08, 0.4, mat(C.purple), 4.75, 0.54, 0.3, scene, 0.025);
 ball(0.015, glow(0x55ff88, 1), 4.6, 0.55, 0.42, scene, 8);
-const pad = box(0.1, 0.03, 0.18, mat(C.ink), 4.72, 0.515, 1.1, scene, 0.015);
+const pad = box(0.1, 0.03, 0.18, mat(C.ink), 4.72, 0.515, 1.33, scene, 0.015);
 pad.rotation.y = 0.4;
 collide(4.5, 5, -0.1, 1.5);
 function setGpuMode(m) {
@@ -1430,6 +1480,10 @@ extras = buildExtras({
   terminal, cpu, deskTopY, noOutline, gradientMap, getLeds: () => ledState,
   sfx, emit,
 });
+more = buildMore({
+  scene, camera, C, mat, glow, basic, box, cyl, ball, sign, canvasTexture, interact, collide, animated,
+  showInfo: (...a) => showInfo(...a), terminal, noOutline, gradientMap, sfx, emit, renderer,
+});
 
 // ------------------------------------------------------------------ HUD
 
@@ -1492,7 +1546,8 @@ function lockPointer() {
 
 overlay.addEventListener('click', () => {
   sfx.init();
-  if (touchMode) { started = true; overlay.classList.add('hidden'); $('touch-ui').classList.add('show'); return; }
+  stageActive = true;
+  if (touchMode) { started = true; overlay.classList.add('hidden'); $('touch-ui').classList.add('show'); toggleFullscreen(true); return; }
   started = true;
   overlay.classList.add('hidden');
   lockPointer();
@@ -1538,7 +1593,13 @@ function use() {
   hovered.action();
 }
 
+let stageActive = false;
+document.addEventListener('pointerdown', (e) => { stageActive = stageEl.contains(e.target) || isFullscreen(); }, true);
 window.addEventListener('keydown', (e) => {
+  const playing = started && (stageActive || locked || isFullscreen() || mode !== 'walk');
+  if (!playing) return;
+  if (mode === 'walk' && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
+  if (mode === 'walk' && e.code === 'KeyF') { toggleFullscreen(); return; }
   if (mode === 'focus') {
     if (e.key === 'Escape') { exitFocus(); e.preventDefault(); return; }
     focus?.keydown?.(e);
@@ -1640,7 +1701,8 @@ focusHint.addEventListener('click', () => exitFocus());
 const joyBase = $('joy-base'), joyKnob = $('joy-knob');
 let joy = null, lookTouch = null;
 function pickAt(x, y) {
-  raycaster.setFromCamera(new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1), camera);
+  const r = stageEl.getBoundingClientRect();
+  raycaster.setFromCamera(new THREE.Vector2(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1), camera);
   for (const h of raycaster.intersectObjects(scene.children, true)) {
     if (h.object === jar || h.object === zzz || h.object.userData.noHit) continue;
     return h.object.userData.interact ?? null;
@@ -1652,16 +1714,18 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   if (mode === 'focus') {
     if (focus?.keydown) {
-      const k = e.clientX < innerWidth / 2 ? 'ArrowLeft' : 'ArrowRight';
+      const sr = stageEl.getBoundingClientRect();
+      const k = e.clientX - sr.left < sr.width / 2 ? 'ArrowLeft' : 'ArrowRight';
       focus.keydown({ key: 'Enter', preventDefault() {} });
       focus.keydown({ key: k, preventDefault() {} });
       lookTouch = { id: e.pointerId, key: k };
     }
     return;
   }
-  if (e.clientX < innerWidth * 0.4 && !joy) {
+  const sr = stageEl.getBoundingClientRect();
+  if (e.clientX - sr.left < sr.width * 0.4 && !joy) {
     joy = { id: e.pointerId, x0: e.clientX, y0: e.clientY };
-    joyBase.style.left = `${e.clientX}px`; joyBase.style.top = `${e.clientY}px`;
+    joyBase.style.left = `${e.clientX - sr.left}px`; joyBase.style.top = `${e.clientY - sr.top}px`;
     joyKnob.style.transform = 'translate(-50%, -50%)';
     joyBase.classList.add('show');
   } else if (!lookTouch) {
@@ -1814,10 +1878,36 @@ function frame() {
   requestAnimationFrame(frame);
 }
 
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+function resizeStage() {
+  const [w, h] = stageSize();
+  camera.aspect = w / h;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(w, h, false);
+  stageEl.classList.toggle('small', w < 700);
+}
+new ResizeObserver(resizeStage).observe(stageEl);
+resizeStage();
+
+// ------------------------------------------------------------------ fullscreen (Fullscreen API, CSS fallback)
+function isFullscreen() { return document.fullscreenElement === stageEl || stageEl.classList.contains('fs'); }
+function toggleFullscreen(force) {
+  const want = force ?? !isFullscreen();
+  if (want) {
+    const req = stageEl.requestFullscreen?.bind(stageEl) ?? stageEl.webkitRequestFullscreen?.bind(stageEl);
+    const fallback = () => { stageEl.classList.add('fs'); document.body.style.overflow = 'hidden'; resizeStage(); };
+    if (req) { try { const p = req(); if (p?.catch) p.catch(fallback); } catch { fallback(); } } else fallback();
+  } else {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    stageEl.classList.remove('fs');
+    document.body.style.overflow = '';
+    resizeStage();
+  }
+}
+document.addEventListener('fullscreenchange', () => { setTimeout(resizeStage, 50); });
+$('fs-btn').addEventListener('click', (e) => { e.stopPropagation(); toggleFullscreen(); });
+$('fs-top').addEventListener('click', () => {
+  toggleFullscreen(true);
+  stageEl.scrollIntoView({ block: 'center' });
 });
 
 // debug / automation hook

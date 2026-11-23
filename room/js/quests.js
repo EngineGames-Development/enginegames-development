@@ -17,6 +17,10 @@ export const QUESTS = [
   ['duck', 'Rubber duck debugging', 'Explain your bug to the duck on the monitor'],
   ['drone', 'Liftoff', 'Launch the quadcopter drone'],
   ['night', 'Night shift', 'Turn off the lights'],
+  ['ctf', 'Capture the flag', 'Find and submit all 5 CTF flags (`submit flag{...}`, hints: `flags`)'],
+  ['ai', 'Machine learning', 'Train the neural net on the AI-lab easel until it learns XOR'],
+  ['matrix', 'Blinkenlights', 'Put your own text on the LED matrix (`matrix <text>`) or run `matrix.asm`'],
+  ['print', 'Maker', 'Finish a 3D print on the printer by the TV'],
 ];
 
 export class Quests {

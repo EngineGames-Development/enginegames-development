@@ -454,6 +454,32 @@ left:
     SLP 30
     JMP right
 `,
+  'matrix.asm': `; matrix.asm - draw moving diagonals on the 8x24 LED matrix
+; port 0x50 = select column (0-23), port 0x51 = write that column's 8 pixels (bit 0 = top)
+    MOV D, 0         ; D = frame counter
+frame:
+    MOV B, 0         ; B = column
+col:
+    OUT 0x50, B
+    MOV A, B
+    ADD A, D
+    AND A, 7         ; row = (column + frame) & 7
+    MOV C, 1
+shift:
+    CMP A, 0
+    JZ draw
+    SHL C            ; C = 1 << row
+    DEC A
+    JMP shift
+draw:
+    OUT 0x51, C
+    INC B
+    CMP B, 24
+    JNZ col
+    INC D
+    SLP 8
+    JMP frame
+`,
 };
 
 // The crackme ships only as a binary (~/re/crackme.bin). Its source stays here, out of the virtual FS.

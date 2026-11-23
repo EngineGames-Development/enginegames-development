@@ -4,7 +4,7 @@
 import { CPU, assemble, disassemble, hex, REGS, PROGRAMS, CRACKME_SRC, CRACKME_INPUT } from './cpu.js';
 import { runSQL, formatTable, runMongo } from './db.js';
 import { shannon } from './entropy.js';
-import { randomFrame, decode, hexdump, nmap } from './net.js';
+import { randomFrame, decode, hexdump, nmap, loginFrame, PCAP_FLAG } from './net.js';
 
 const COLORS = {
   fg: '#39ff88', dim: '#5f8f74', amber: '#ffb347', red: '#ff5c7a', cyan: '#5ad1ff',
@@ -22,6 +22,22 @@ function randomBytes(n) {
   return b;
 }
 
+// ------------------------------------------------------------------ CTF
+
+export const FLAGS = [
+  { id: 'dotfile', flag: 'flag{h1dd3n_d0tf1l3s}', hint: 'Some files hide from a plain `ls`.' },
+  { id: 'base64', flag: 'flag{b4s3_64_1s_n0t_crypt0}', hint: '~/ctf/note.b64 is encoded, not encrypted.' },
+  { id: 'rot13', flag: 'flag{r0t13_1s_n0t_crypt0_31th3r}', hint: '~/ctf/memo.txt: Caesar would be proud.' },
+  { id: 'pcap', flag: PCAP_FLAG, hint: 'Someone logs in over plain HTTP. Sniff the wire.' },
+  { id: 'trash', flag: 'flag{d0nt_thr0w_s3cr3ts_4w4y}', hint: 'Check what fell out of the trash can.' },
+];
+export function rot13(str) {
+  return str.replace(/[a-z]/gi, (ch) => {
+    const b = ch <= 'Z' ? 65 : 97;
+    return String.fromCharCode(((ch.charCodeAt(0) - b + 13) % 26) + b);
+  });
+}
+
 function makeFS() {
   const asm = {};
   for (const [k, v] of Object.entries(PROGRAMS)) asm[k] = v;
@@ -34,6 +50,16 @@ function makeFS() {
     quarantine: {},
     home: {
       engine: {
+        '.flag': `You found a hidden dotfile!\n${FLAGS[0].flag}\nSubmit it with: submit <flag>\n`,
+        '.bash_history': 'ls\ncd projects\nvim kernel.rs\n:q!\n:wq\nhow to exit vim\nsudo make me a sandwich\n',
+        ctf: {
+          'README.txt':
+            'Engine Room CTF: find 5 flags that look like flag{...} and submit them: submit flag{...}\n' +
+            'Progress: flags   Tools: ls -a, cat, base64 -d, rot13, strings, sniff, and your eyes in the room.\n' +
+            'The scoreboard hangs on the wall next to the safe.\n',
+          'note.b64': btoa(`Nice decoding! ${FLAGS[1].flag}`) + '\n',
+          'memo.txt': rot13(`Top secret memo. The flag is ${FLAGS[2].flag}. Do not tell anyone.`) + '\n',
+        },
         'README.txt':
           'This room is my brain dumped into three.js.\n' +
           'Try:  run knight.asm   entropy   scan   sniff   gdt   neofetch\n' +
@@ -115,6 +141,10 @@ const BUDDY = [
   [/sql|mysql|mongo|database/, 'The filing cabinet is a database. Try `sql SELECT * FROM projects` or `mongo db.devices.find({port: {$gt: 1000}})`.'],
   [/arm|robot|servo/, 'The robot arm listens on ports 0x30 (base), 0x31 (shoulder) and 0x32 (claw). `run arm.asm` or `arm 200 150 255`.'],
   [/scope|oscillo|logic analy/, 'The oscilloscope on the bench samples port 0x00 and draws all 8 LED bits as square waves. Try `run blink.asm`.'],
+  [/ctf|flag/, 'CTF time! 5 flags hide in this room: a dotfile, a base64 note, a ROT13 memo, a sniffed login and something near the trash. `flags` shows hints.'],
+  [/neural|machine learning|\bml\b|\bai\b|xor|train/, 'The easel runs a real 2-4-1 neural net learning XOR with backprop. Click it or type `train`, then `predict 1 0`.'],
+  [/matrix|led/, 'The 8x24 LED matrix above the bench scrolls text (`matrix hello`). EG-8 can draw on it too: port 0x50 picks a column, 0x51 writes its 8 bits.'],
+  [/print|3d/, 'The 3D printer on the TV cabinet slices models layer by layer. Click it or type `print`.'],
   [/solder|iron|pcb/, 'Soldering: heat the iron to ~350 °C, heat the pad AND the leg, then feed the solder. A good joint is a shiny little cone.'],
   [/make|build|qemu|compile/, '`make` builds SecureRustOS (nasm + cargo + ld) and `make run` boots it in "QEMU". The PC under the desk does the work.'],
   [/who are you|what are you/, "I'm EngineBuddy, a tiny keyword-matching AI. Not an LLM, just regexes with ambition."],
@@ -176,6 +206,8 @@ export class Terminal {
     this.writeTarget = null;
     this.writeBuf = [];
     this.fs = makeFS();
+    this.ctfFound = new Set();
+    try { JSON.parse(localStorage.getItem('engineRoomFlags') || '[]').forEach((x) => this.ctfFound.add(x)); } catch { /* ignore */ }
     this.cwd = ['home', 'engine'];
     this.bootTime = performance.now();
     this.boot();
@@ -416,7 +448,10 @@ export class Terminal {
           ['reversing', 'strings <f>  load <f.bin|f.asm>  crackme <password>   (start: cat ~/re/README.txt)'],
           ['security', 'scan  entropy [n]  vault gen [len]  vault hash <txt>  nmap  sniff [n]'],
           ['database', 'sql <SELECT ...|SHOW TABLES|DESCRIBE t>   mongo db.<coll>.find({...})'],
+          ['ctf', 'ls -a  base64 [-d] <f>  rot13 <f>  submit flag{...}  flags'],
+          ['ai/maker', 'train [reset]  predict <a> <b>  matrix <text>  print'],
           ['room', 'quests  buddy <question>  gpu [mode]  lights  lamp <hue>  arm <b> <s> <c>  solder on|off  drone  exit'],
+          ['fun', 'sl  cowsay <txt>  fortune  cmatrix  sudo  vim'],
         ];
         t.print('SecureRustOS shell - available commands:', c.white);
         for (const [g, cmds] of groups) t.print(`  ${g.padEnd(10)} ${cmds}`, c.fg);
@@ -425,11 +460,13 @@ export class Terminal {
       clear() { t.lines = []; t.dirty = true; },
       pwd() { t.print('/' + t.cwd.join('/')); },
       ls(args) {
-        const p = t.resolve(args[0] ?? '.');
+        const all = args.some((x) => /^-\w*a/.test(x));
+        const target = args.find((x) => !x.startsWith('-'));
+        const p = t.resolve(target ?? '.');
         const n = t.get(p);
         if (n === undefined) throw new Error('no such file or directory');
-        if (!t.isDir(n)) { t.print(args[0]); return; }
-        const names = Object.keys(n).sort();
+        if (!t.isDir(n)) { t.print(target); return; }
+        const names = Object.keys(n).filter((k) => all || !k.startsWith('.')).sort();
         if (!names.length) { t.print('(empty)', c.dim); return; }
         const out = names.map((k) => (t.isDir(n[k]) ? k + '/' : k));
         const width = Math.max(...out.map((s) => s.length)) + 2;
@@ -458,6 +495,13 @@ export class Terminal {
         t.print(`writing ${args[0]} - end with a single "." on its own line, Ctrl+C cancels`, c.dim);
       },
       rm(args) {
+        if (args.includes('/') || args.includes('/*')) {
+          t.print("rm: it is dangerous to operate recursively on '/'", c.red);
+          t.print('rm: nice try. Tux has hidden the root filesystem behind the bean bag.', c.purple);
+          sys.sound?.('error');
+          return;
+        }
+        args = args.filter((x) => !x.startsWith('-'));
         const p = t.resolve(args[0] ?? '');
         const f = p.pop();
         const dir = t.get(p);
@@ -636,6 +680,121 @@ export class Terminal {
         t.print(`soldering station: ${st.on ? 'ON' : 'OFF'}  tip ${Math.round(st.temp)} °C  joints ${st.joints}/8`, c.amber);
         if (!args[0]) t.print('usage: solder on | off', c.dim);
       },
+      base64(args) {
+        const decodeMode = args[0] === '-d' || args[0] === '--decode';
+        const arg = decodeMode ? args[1] : args[0];
+        if (!arg) throw new Error('usage: base64 [-d] <file|text>');
+        let input = arg;
+        try { const f = t.findFile(arg).data; input = typeof f === 'string' ? f : dec.decode(f); } catch { /* treat as text */ }
+        if (decodeMode) {
+          try { t.print(atob(input.trim()), c.amber); } catch { throw new Error('invalid base64 input'); }
+        } else t.print(btoa(input), c.amber);
+      },
+      rot13(_, rest) {
+        if (!rest) throw new Error('usage: rot13 <file|text>');
+        let input = rest;
+        try { const f = t.findFile(rest).data; input = typeof f === 'string' ? f : dec.decode(f); } catch { /* treat as text */ }
+        t.print(rot13(input).replace(/\n$/, ''), c.amber);
+      },
+      submit(_, rest) {
+        const guess = rest.trim();
+        if (!guess) throw new Error('usage: submit flag{...}');
+        const f = FLAGS.find((x) => x.flag === guess);
+        if (!f) { t.print('Wrong flag. Keep hunting! (hint: flags)', c.red); sys.sound?.('error'); return; }
+        if (t.ctfFound.has(f.id)) { t.print(`Already submitted: ${f.id}`, c.dim); return; }
+        t.ctfFound.add(f.id);
+        try { localStorage.setItem('engineRoomFlags', JSON.stringify([...t.ctfFound])); } catch { /* ignore */ }
+        t.print(`Correct! Flag "${f.id}" captured (${t.ctfFound.size}/${FLAGS.length}).`, c.fg);
+        sys.sound?.('coin');
+        sys.onFlag?.(t.ctfFound);
+      },
+      flags() {
+        t.print(`CTF progress: ${t.ctfFound.size}/${FLAGS.length}`, c.white);
+        FLAGS.forEach((f) => t.print(`  [${t.ctfFound.has(f.id) ? 'x' : ' '}] ${f.id.padEnd(8)} ${t.ctfFound.has(f.id) ? f.flag : 'hint: ' + f.hint}`, t.ctfFound.has(f.id) ? c.fg : c.dim));
+      },
+      train(args) {
+        const r = sys.train?.(args[0] === 'reset');
+        if (!r) throw new Error('AI lab offline');
+        t.print('AI lab: training a 2-4-1 neural net on XOR (tanh hidden layer, sigmoid output, full-batch gradient descent).', c.cyan);
+        t.print('Watch the easel next to the bookshelf. Then try: predict 1 0', c.dim);
+      },
+      predict(args) {
+        const a = Number(args[0]), b = Number(args[1]);
+        if (args.length < 2 || [a, b].some(Number.isNaN)) throw new Error('usage: predict <a> <b>   e.g. predict 1 0');
+        const out = sys.predict?.(a, b);
+        if (out === undefined) throw new Error('AI lab offline');
+        t.print(`net(${a}, ${b}) = ${out.toFixed(4)}  ->  ${out > 0.5 ? 1 : 0}   (XOR says ${(a > 0.5) !== (b > 0.5) ? 1 : 0})`, c.amber);
+      },
+      matrix(_, rest) {
+        if (!rest) throw new Error('usage: matrix <text>   (or run matrix.asm to draw with EG-8 ports 0x50/0x51)');
+        sys.matrixText?.(rest);
+        t.print(`LED matrix: scrolling "${rest.toUpperCase()}"`, c.amber);
+      },
+      print() {
+        const name = sys.startPrint?.();
+        t.print(name ? `3D printer: slicing ${name}.stl ... printing (watch the TV cabinet)` : '3D printer: busy, wait for the current print to finish', c.cyan);
+      },
+      sl() {
+        const train = [
+          '      ====        ________                ___________',
+          '  _D _|  |_______/        \\__I_I_____===__|_________|',
+          '   |(_)---  |   H\\________/ |   |        =|___ ___|',
+          '   /     |  |   H  |  |     |   |         ||_| |_||',
+          '  |      |  |   H  |__--------------------| [___] |',
+          '  | ________|___H__/__|_____/[][]~\\_______|       |',
+          '  |/ |   |-----------I_____I [][] []  D   |=======|__',
+          '__/ =| o |=-~~\\  /~~\\  /~~\\  /~~\\ ____Y___________|__',
+          ' |/-=|___|=    ||    ||    ||    |_____/~\\___/',
+          '  \\_/      \\O=====O=====O=====O_/      \\_/',
+        ];
+        t.mode = 'boot';
+        const frames = [];
+        for (let off = 30; off >= -60; off -= 6) {
+          frames.push([() => {
+            t.lines.splice(t.lines.length - train.length, train.length);
+            train.forEach((l) => t.lines.push({ text: (off > 0 ? ' '.repeat(off) + l : l.slice(-off)).slice(0, t.cols), color: c.white }));
+            t.dirty = true;
+          }, null, 90]);
+        }
+        train.forEach(() => t.lines.push({ text: '', color: c.white }));
+        t.queueLines([...frames, ['choo choo! (you typed sl instead of ls)', c.dim, 0], [null, null, 0]]);
+      },
+      cowsay(_, rest) {
+        const msg = rest || 'moo. use cowsay <text>';
+        const line = '-'.repeat(msg.length + 2);
+        [` ${line}`, `< ${msg} >`, ` ${line}`, '        \\   ^__^', '         \\  (oo)\\_______', '            (__)\\       )\\/\\', '                ||----w |', '                ||     ||'].forEach((l) => t.print(l, c.white));
+      },
+      fortune() {
+        const F = [
+          'There are 10 kinds of people: those who understand binary and those who do not.',
+          'It works on my machine. Then we will ship your machine.',
+          'A kernel panic a day keeps the users away.',
+          'Weeks of coding can save you hours of planning.',
+          'The best way to learn assembly is to write a bootloader at 2 AM.',
+          'Real programmers count from 0.',
+          'In Rust we trust; in unsafe we verify.',
+          '99 little bugs in the code. Take one down, patch it around. 127 little bugs in the code.',
+        ];
+        t.print(F[Math.floor(Math.random() * F.length)], c.purple);
+      },
+      cmatrix() {
+        t.mode = 'boot';
+        const glyphs = '01アイウエオカキクケコ<>/{}#$';
+        const items = [];
+        for (let i = 0; i < 28; i++) {
+          items.push([Array.from({ length: t.cols }, () => (Math.random() < 0.55 ? glyphs[Math.floor(Math.random() * glyphs.length)] : ' ')).join(''), i % 4 ? c.fg : c.white, 60]);
+        }
+        t.queueLines([...items, ['Wake up, engine...', c.white, 600], ['The Matrix has you. Follow the white rabbit (or just type help).', c.fg, 0], [null, null, 0]]);
+      },
+      sudo(_, rest) {
+        if (/make me a sandwich/.test(rest)) { t.print('Okay. Here is your sandwich: [=====]', c.amber); return; }
+        t.print('[sudo] password for engine: ********', c.dim);
+        t.print('engine is not in the sudoers file. This incident will be reported (to the cat).', c.red);
+      },
+      vim() { t.print('You are now trapped in vim. Just kidding: there is no vim here. (Hint for real life: Esc, then :q!)', c.purple); },
+      vi() { t.print('vi: see vim. Escape while you still can.', c.purple); },
+      nano() { t.print('nano: a friendly editor! Here we use: write <file> (end with a single ".")', c.purple); },
+      emacs() { t.print('emacs: great operating system, lacking only a decent editor. Try: write <file>', c.purple); },
       quests() {
         const q = sys.quests?.();
         if (!q) throw new Error('quest system offline');
@@ -792,15 +951,18 @@ export class Terminal {
       },
       nmap() { nmap().forEach((l) => t.print(l, l.startsWith('  ') ? c.fg : c.cyan)); },
       sniff(args) {
-        const n = Math.min(parseInt(args[0] ?? '6', 10) || 6, 30);
+        const n = Math.max(1, Math.min(parseInt(args[0] ?? '6', 10) || 6, 30));
         t.print('No.  Proto  Source         Destination    Info', c.white);
+        let login = null;
         for (let i = 0; i < n; i++) {
-          const f = randomFrame();
+          const f = i === 3 ? loginFrame() : randomFrame();
           const d = decode(f);
+          if (d.login) login = f;
           sys.irq.nic++;
-          t.print(`${String(i + 1).padStart(3)}  ${d.proto.padEnd(5)}  ${d.src.padEnd(13)}  ${d.dst.padEnd(13)}  ${d.info}${d.ok ? '' : ' [BAD CHECKSUM]'}`, c.fg);
-          if (i === n - 1) hexdump(f, 48).forEach((l) => t.print('     ' + l, c.dim));
+          t.print(`${String(i + 1).padStart(3)}  ${d.proto.padEnd(5)}  ${d.src.padEnd(13)}  ${d.dst.padEnd(13)}  ${d.info}${d.ok ? '' : ' [BAD CHECKSUM]'}`, d.login ? c.amber : c.fg);
+          if (i === n - 1 && !login) hexdump(f, 48).forEach((l) => t.print('     ' + l, c.dim));
         }
+        if (login) { t.print('frame 4 (HTTP POST) in hex:', c.dim); hexdump(login, 256).forEach((l) => t.print('     ' + l, c.dim)); }
         t.print('(last frame shown as hex; IPv4 header checksum verified per RFC 1071)', c.dim);
       },
 
