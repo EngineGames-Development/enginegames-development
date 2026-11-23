@@ -79,12 +79,12 @@ export function lavaMaterial() {
           d.x = mod(d.x + 1.5, 3.0) - 1.5;
           f += r * r / max(dot(d, d), 1e-4);
         }
-        float blob = smoothstep(0.9, 1.15, f);
-        vec3 liquid = hsv(hue + 0.08, 0.7, 0.35);
+        float blob = smoothstep(0.98, 1.02, f);
+        vec3 liquid = hsv(hue + 0.1, 0.55, 0.75);
         vec3 wax = hsv(hue, 0.85, 1.0);
-        vec3 col = mix(liquid, wax * 1.6, blob);
+        vec3 col = mix(liquid, wax, blob);
         float rim = pow(1.0 - abs(vNormal.z), 2.0);
-        col += rim * 0.25 * wax;
+        col += rim * 0.15;
         gl_FragColor = vec4(col, 0.92);
       }`,
   });
@@ -160,31 +160,69 @@ export function gpuMaterial() {
   });
 }
 
-// --------------------------------------------------------------- window night sky
+// --------------------------------------------------------------- window sky (cartoon day / night)
 export function skyMaterial() {
   return new THREE.ShaderMaterial({
-    uniforms: { time: { value: 0 } },
+    uniforms: { time: { value: 0 }, night: { value: 0 } },
     vertexShader: VERT,
     fragmentShader: /* glsl */ `
       uniform float time;
+      uniform float night;
       varying vec2 vUv;
       float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float circ(vec2 p, vec2 c, float r) { return step(length(p - c), r); }
+      float cloud(vec2 p, vec2 c, float s) {
+        float v = circ(p, c, 0.07 * s);
+        v = max(v, circ(p, c + vec2(0.07, 0.02) * s, 0.09 * s));
+        v = max(v, circ(p, c + vec2(0.15, 0.0) * s, 0.065 * s));
+        v = max(v, step(abs(p.y - c.y + 0.025 * s), 0.035 * s) * step(c.x - 0.02 * s, p.x) * step(p.x, c.x + 0.17 * s));
+        return v;
+      }
       void main() {
-        vec3 col = mix(vec3(0.02, 0.03, 0.09), vec3(0.09, 0.05, 0.2), vUv.y);
-        vec2 g = floor(vUv * vec2(120.0, 80.0));
-        float s = hash(g);
-        if (s > 0.985) col += vec3(0.8, 0.85, 1.0) * (0.6 + 0.4 * sin(time * (2.0 + s * 5.0) + s * 40.0));
-        // distant city skyline
-        float x = vUv.x * 24.0;
-        float h = 0.12 + 0.18 * hash(vec2(floor(x), 3.0));
-        if (vUv.y < h) {
-          col = vec3(0.015, 0.015, 0.035);
-          vec2 w = floor(vec2(vUv.x * 220.0, vUv.y * 120.0));
-          if (hash(w) > 0.78 && mod(w.x, 2.0) < 1.0) col = vec3(0.9, 0.7, 0.35) * 0.6;
+        vec2 p = vec2(vUv.x * 1.56, vUv.y);
+        // sky
+        vec3 day = mix(vec3(0.75, 0.9, 1.0), vec3(0.3, 0.62, 0.98), vUv.y);
+        vec3 eve = mix(vec3(0.16, 0.12, 0.35), vec3(0.04, 0.05, 0.18), vUv.y);
+        vec3 col = mix(day, eve, night);
+        // sun / moon
+        vec2 sc = vec2(1.2, 0.76);
+        float d = length(p - sc);
+        vec3 sun = mix(vec3(1.0, 0.86, 0.25), vec3(0.95, 0.95, 1.0), night);
+        col = mix(col, mix(col, sun, 0.35), step(d, 0.15));
+        col = mix(col, sun, step(d, 0.1));
+        // moon crater shading at night
+        col = mix(col, vec3(0.8, 0.8, 0.9), night * circ(p, sc + vec2(0.03, 0.02), 0.025));
+        // stars
+        vec2 g = floor(vUv * vec2(90.0, 60.0));
+        float st = step(0.975, hash(g)) * (0.5 + 0.5 * sin(time * 3.0 + hash(g) * 30.0));
+        col += night * st * vec3(1.0, 0.95, 0.7) * step(0.35, vUv.y);
+        // clouds drifting
+        for (int i = 0; i < 4; i++) {
+          float fi = float(i);
+          float x = mod(fi * 0.47 + time * (0.015 + fi * 0.004), 1.9) - 0.25;
+          float c = cloud(p, vec2(x, 0.55 + 0.11 * mod(fi * 1.7, 2.0)), 1.0 + 0.3 * mod(fi, 2.0));
+          vec3 cc = mix(vec3(1.0), vec3(0.42, 0.42, 0.62), night);
+          col = mix(col, cc, c);
         }
-        // moon
-        float m = length((vUv - vec2(0.78, 0.75)) * vec2(1.4, 1.0));
-        col += vec3(0.9, 0.9, 1.0) * smoothstep(0.07, 0.06, m) + vec3(0.2, 0.2, 0.4) * smoothstep(0.25, 0.0, m) * 0.4;
+        // hills
+        float h1 = 0.28 + 0.06 * sin(p.x * 4.0 + 1.0) + 0.03 * sin(p.x * 9.0);
+        float h2 = 0.18 + 0.05 * sin(p.x * 6.0 + 3.0);
+        vec3 hillA = mix(vec3(0.45, 0.78, 0.33), vec3(0.12, 0.2, 0.22), night);
+        vec3 hillB = mix(vec3(0.3, 0.64, 0.25), vec3(0.08, 0.14, 0.17), night);
+        col = mix(col, hillA, step(vUv.y, h1));
+        col = mix(col, hillB, step(vUv.y, h2));
+        // little houses with lit windows at night
+        for (int i = 0; i < 5; i++) {
+          float fi = float(i);
+          float hx = 0.15 + fi * 0.3;
+          float base = 0.18 + 0.05 * sin(hx * 6.0 + 3.0);
+          float house = step(abs(p.x - hx), 0.035) * step(vUv.y, base + 0.05) * step(base - 0.01, vUv.y);
+          float roof = step(abs(p.x - hx), 0.045 - (vUv.y - base - 0.05)) * step(base + 0.05, vUv.y) * step(vUv.y, base + 0.09);
+          col = mix(col, mix(vec3(1.0, 0.95, 0.85), vec3(0.2, 0.18, 0.25), night), house);
+          col = mix(col, mix(vec3(0.85, 0.3, 0.25), vec3(0.3, 0.12, 0.14), night), roof);
+          float win = step(abs(p.x - hx), 0.012) * step(abs(vUv.y - base - 0.025), 0.012);
+          col = mix(col, mix(vec3(0.35, 0.55, 0.85), vec3(1.0, 0.85, 0.35), night), win * house);
+        }
         gl_FragColor = vec4(col, 1.0);
       }`,
   });

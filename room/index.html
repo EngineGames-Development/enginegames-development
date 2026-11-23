@@ -4,57 +4,65 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>The Engine Room | EngineGames-Development</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
-    :root { --fg: #c0caf5; --accent: #7aa2f7; --green: #39ff88; --purple: #bb9af7; --bg: rgba(16, 18, 34, 0.88); }
+    /* cartoon HUD: cream cards, thick ink outlines, offset shadows, chunky rounded type */
+    :root { --ink: #2b2340; --cream: #fff3dc; --red: #ef5a5a; --yellow: #ffcd3c; --blue: #4a7fe0; --green: #55c26b; --purple: #8a62e8; }
     * { box-sizing: border-box; }
-    html, body { margin: 0; height: 100%; overflow: hidden; background: #07070f; color: var(--fg); font-family: "JetBrains Mono", "DejaVu Sans Mono", Consolas, monospace; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #2b2340; color: var(--ink); font-family: "Fredoka", "Trebuchet MS", system-ui, sans-serif; }
     canvas { display: block; }
-    code { color: var(--green); background: rgba(57, 255, 136, 0.08); padding: 0 4px; border-radius: 3px; }
-    code.big { font-size: 1.25em; display: inline-block; margin: 6px 0; letter-spacing: 1px; user-select: all; }
+    code { font-family: "DejaVu Sans Mono", Consolas, monospace; font-size: .92em; color: #1d6b3a; background: #e3f6e5; padding: 1px 5px; border-radius: 6px; border: 2px solid #bfe6c5; }
+    code.big { font-size: 1.15em; display: inline-block; margin: 6px 0; letter-spacing: 1px; user-select: all; }
+    .card, #info, #help, #panel, #tooltip, #focus-hint { background: var(--cream); border: 3px solid var(--ink); box-shadow: 5px 5px 0 var(--ink); }
 
-    #overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at center, rgba(30, 20, 60, 0.82), rgba(5, 5, 12, 0.95)); cursor: pointer; z-index: 10; transition: opacity .3s; }
+    #overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(43, 35, 64, 0.55); cursor: pointer; z-index: 10; transition: opacity .3s; }
     #overlay.hidden { opacity: 0; pointer-events: none; }
-    #overlay .card { max-width: 760px; padding: 34px 42px; border: 1px solid #3b4261; border-radius: 14px; background: var(--bg); box-shadow: 0 0 60px rgba(122, 92, 255, 0.25); }
-    #overlay h1 { margin: 0 0 4px; font-size: 34px; color: #fff; letter-spacing: 2px; }
-    #overlay h1 span { color: var(--green); text-shadow: 0 0 12px var(--green); }
-    #overlay .sub { color: var(--purple); margin-bottom: 18px; }
-    #overlay table { border-collapse: collapse; margin: 10px 0 18px; font-size: 14px; }
-    #overlay td { padding: 3px 14px 3px 0; vertical-align: top; }
-    #overlay td:first-child { color: var(--accent); white-space: nowrap; }
-    #overlay .go { display: inline-block; padding: 10px 22px; border: 1px solid var(--green); border-radius: 8px; color: var(--green); text-shadow: 0 0 8px var(--green); animation: pulse 1.6s infinite; }
-    #overlay .note { font-size: 12px; color: #737aa2; margin-top: 14px; }
-    @keyframes pulse { 50% { box-shadow: 0 0 18px rgba(57, 255, 136, 0.5); } }
+    #overlay .card { max-width: 720px; padding: 30px 36px; border-radius: 26px; transform: rotate(-0.6deg); }
+    #overlay h1 { margin: 0 0 6px; font-size: 46px; line-height: 1.05; font-weight: 700; }
+    #overlay h1 span { color: var(--red); }
+    #overlay .sub { font-size: 17px; margin-bottom: 14px; color: #5b4f7a; }
+    #overlay table { border-collapse: collapse; margin: 6px 0 16px; font-size: 16px; }
+    #overlay td { padding: 4px 14px 4px 0; vertical-align: middle; }
+    #overlay td:first-child { white-space: nowrap; }
+    kbd { display: inline-block; min-width: 30px; padding: 2px 8px; border: 2px solid var(--ink); border-bottom-width: 4px; border-radius: 8px; background: #fff; font-family: inherit; font-weight: 600; text-align: center; }
+    #overlay .go { display: inline-block; margin-top: 4px; padding: 12px 28px; border: 3px solid var(--ink); border-radius: 16px; background: var(--yellow); box-shadow: 4px 4px 0 var(--ink); font-weight: 700; font-size: 20px; animation: bob 1.4s ease-in-out infinite; }
+    #overlay .note { font-size: 13px; color: #6b6088; margin-top: 16px; }
+    @keyframes bob { 50% { transform: translateY(-4px); } }
 
-    #crosshair { position: fixed; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.7); pointer-events: none; z-index: 5; transition: transform .1s, border-color .1s; }
-    #crosshair.active { transform: scale(1.8); border-color: var(--green); }
+    #crosshair { position: fixed; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #fff; border: 3px solid var(--ink); pointer-events: none; z-index: 5; transition: transform .12s, background .12s; }
+    #crosshair.active { transform: scale(1.5); background: var(--yellow); }
     #crosshair.hidden { display: none; }
-    #tooltip { position: fixed; left: 50%; top: calc(50% + 22px); transform: translateX(-50%); padding: 6px 12px; border-radius: 6px; background: var(--bg); border: 1px solid #3b4261; font-size: 14px; color: #fff; pointer-events: none; opacity: 0; transition: opacity .15s; z-index: 5; white-space: nowrap; }
+    #tooltip { position: fixed; left: 50%; top: calc(50% + 26px); transform: translateX(-50%); padding: 6px 14px; border-radius: 12px; box-shadow: 3px 3px 0 var(--ink); font-size: 16px; font-weight: 600; pointer-events: none; opacity: 0; transition: opacity .15s; z-index: 5; white-space: nowrap; }
     #tooltip.show { opacity: 1; }
 
-    #info { position: fixed; left: 20px; bottom: 20px; max-width: 520px; padding: 14px 18px; border-radius: 10px; background: var(--bg); border: 1px solid #3b4261; border-left: 3px solid var(--purple); font-size: 14px; line-height: 1.5; opacity: 0; transform: translateY(10px); transition: all .25s; pointer-events: none; z-index: 6; }
-    #info.show { opacity: 1; transform: none; }
-    #info h3 { margin: 0 0 6px; color: var(--purple); font-size: 15px; }
+    #info { position: fixed; left: 20px; bottom: 20px; max-width: 520px; padding: 14px 18px; border-radius: 18px; font-size: 16px; line-height: 1.45; opacity: 0; transform: translateY(14px) rotate(-0.5deg); transition: all .25s cubic-bezier(.3, 1.6, .5, 1); pointer-events: none; z-index: 6; }
+    #info.show { opacity: 1; transform: rotate(-0.5deg); }
+    #info h3 { margin: 0 0 4px; font-size: 19px; color: var(--purple); }
 
-    #stats { position: fixed; left: 12px; top: 10px; font-size: 12px; color: #737aa2; z-index: 5; pointer-events: none; }
-    #hint { position: fixed; right: 14px; top: 10px; font-size: 12px; color: #737aa2; z-index: 5; pointer-events: none; }
-    #help { position: fixed; right: 14px; top: 34px; padding: 12px 16px; background: var(--bg); border: 1px solid #3b4261; border-radius: 10px; font-size: 13px; line-height: 1.6; display: none; z-index: 6; }
+    #stats, #hint { position: fixed; top: 10px; font-size: 13px; color: #fff; background: rgba(43, 35, 64, 0.6); padding: 3px 10px; border-radius: 10px; z-index: 5; pointer-events: none; }
+    #stats { left: 12px; }
+    #hint { right: 14px; }
+    #help { position: fixed; right: 14px; top: 42px; padding: 12px 16px; border-radius: 16px; font-size: 15px; line-height: 1.55; display: none; z-index: 6; }
     #help.show { display: block; }
+    #help b { color: var(--red); }
 
-    #focus-hint { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); padding: 8px 16px; border-radius: 8px; background: var(--bg); border: 1px solid var(--green); color: var(--green); font-size: 13px; cursor: pointer; display: none; z-index: 6; }
+    #focus-hint { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); padding: 8px 16px; border-radius: 14px; font-size: 15px; font-weight: 600; cursor: pointer; display: none; z-index: 6; }
     #focus-hint.show { display: block; }
 
-    #panel { position: fixed; right: 16px; bottom: 16px; width: min(760px, calc(100vw - 32px)); padding: 12px 14px; background: rgba(10, 12, 24, 0.94); border: 1px solid #2b3d78; border-radius: 10px; font-size: 12px; display: none; z-index: 6; }
+    #panel { position: fixed; right: 16px; bottom: 16px; width: min(780px, calc(100vw - 32px)); padding: 12px 14px; border-radius: 18px; font-size: 12.5px; display: none; z-index: 6; }
     #panel.show { display: block; }
-    #panel header { display: flex; justify-content: space-between; color: var(--green); margin-bottom: 6px; }
-    #panel-close { cursor: pointer; color: #ff5c7a; }
-    #panel .row { display: grid; grid-template-columns: 36px 64px 110px 110px 46px 1fr; gap: 6px; padding: 1px 4px; white-space: nowrap; overflow: hidden; }
+    #panel header { display: flex; justify-content: space-between; gap: 12px; font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    #panel-close { cursor: pointer; color: var(--red); white-space: nowrap; }
+    #panel .row { display: grid; grid-template-columns: 36px 64px 110px 110px 46px 1fr; gap: 6px; padding: 2px 6px; margin-bottom: 2px; border-radius: 6px; white-space: nowrap; overflow: hidden; font-family: "DejaVu Sans Mono", Consolas, monospace; }
     #panel .row span:last-child { overflow: hidden; text-overflow: ellipsis; }
-    #panel .p-TCP { background: rgba(122, 162, 247, 0.10); }
-    #panel .p-DNS { background: rgba(57, 255, 136, 0.08); }
-    #panel .p-ARP { background: rgba(255, 179, 71, 0.10); }
-    #panel .p-ICMP { background: rgba(187, 154, 247, 0.12); }
-    #panel i { color: #4a6; font-style: normal; }
-    #panel-hex { margin: 8px 0 0; color: #9aa5ce; font-size: 11.5px; border-top: 1px solid #2b3d78; padding-top: 6px; }
+    #panel .p-TCP { background: #dfe8ff; }
+    #panel .p-DNS { background: #ddf5e0; }
+    #panel .p-ARP { background: #fff0c8; }
+    #panel .p-ICMP { background: #eee2ff; }
+    #panel i { color: #2a8a46; font-style: normal; }
+    #panel-hex { margin: 8px 0 0; padding: 8px; border-radius: 10px; background: var(--ink); color: #c8f7d4; font-size: 11.5px; overflow-x: auto; }
   </style>
   <script type="importmap">
     {
@@ -68,14 +76,14 @@
 <body>
   <div id="overlay">
     <div class="card">
-      <h1>THE ENGINE <span>ROOM</span></h1>
+      <h1>The Engine <span>Room</span></h1>
       <div class="sub">An interactive room by EngineGames-Development: OS dev · low-level · security · embedded · AI · graphics</div>
       <table>
-        <tr><td>W A S D</td><td>walk (Shift = faster)</td></tr>
-        <tr><td>Mouse</td><td>look around</td></tr>
-        <tr><td>E / Click</td><td>use the object under the crosshair</td></tr>
-        <tr><td>Esc</td><td>leave the terminal / pause</td></tr>
-        <tr><td>H</td><td>toggle the help panel</td></tr>
+        <tr><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></td><td>walk (Shift = faster)</td></tr>
+        <tr><td><kbd>Mouse</kbd></td><td>look around</td></tr>
+        <tr><td><kbd>E / Click</kbd></td><td>use the object under the crosshair</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>leave the terminal / pause</td></tr>
+        <tr><td><kbd>H</kbd></td><td>toggle the help panel</td></tr>
       </table>
       <div>Start at the <b>CRT monitor</b>: it runs a shell with a real 8-bit CPU emulator (EG-8).<br/>Try <code>help</code>, <code>run knight.asm</code>, <code>entropy</code>, <code>scan</code>, <code>gdt</code>, <code>sniff</code>.</div>
       <p><span class="go">Click to enter</span></p>
@@ -89,7 +97,7 @@
   <div id="stats"></div>
   <div id="hint">H = help</div>
   <div id="help">
-    <b>Things to try</b><br/>
+    <b>Things to try</b><br/>Sleeping cat · wall clock · plants<br/>
     CRT monitor: SecureRustOS shell + EG-8 CPU<br/>
     Arduino: flash knight.asm to the LEDs<br/>
     Raspberry Pi: entropy → LEDs<br/>

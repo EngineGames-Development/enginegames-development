@@ -17,7 +17,13 @@ signatures, crypto) instead of just reading labels.
 - Runs from any static web server (for example `python3 -m http.server`) or GitHub Pages.
 - Keep the code modular: one module per subsystem (CPU, terminal, network, entropy, shaders, scene).
 - Aim for 60 FPS on a mid-range laptop: instanced meshes, few dynamic lights, small render targets.
-- Visual style: dark, cozy hacker den. Tokyo-night style colors (deep blue/purple), neon accents, bloom glow.
+- Visual style: **cartoony and cheerful**, like a cozy animated-movie bedroom workshop:
+  - toon shading (`MeshToonMaterial` with a 3-step gradient) and black ink outlines (`OutlineEffect`)
+  - rounded, chunky furniture (`RoundedBoxGeometry`), warm saturated colors, polka-dot wallpaper, wooden floor
+  - daylight through a window with a cartoon sky (clouds, hills, little houses); the light switch turns it into night with fairy lights
+  - recognizable props instead of abstract shapes: illustrated posters, potted plants, a wall clock that shows the real time,
+    a sleeping cat on a bean bag, a trash can full of crumpled core dumps, a TV cabinet with a game console
+  - rounded cartoon HUD (Fredoka font, cream cards, thick outlines)
 
 ## Controls
 
@@ -75,8 +81,8 @@ signatures, crypto) instead of just reading labels.
   + TCP/UDP/ICMP, then decoded back into a Wireshark-like line plus a hex dump.
 - Terminal: `sniff [n]`, `nmap` (scans the "devices" in the room).
 
-### 7. Quarantine chamber: Engine's Antivirus
-- A glass box with a floating virus model, glowing red when threats are found and green when the system is clean.
+### 7. Virus jar: Engine's Antivirus
+- A cartoon virus with googly eyes and angry brows bouncing inside a glass jar. After a scan it calms down, turns blue and falls asleep.
 - Terminal `scan`: byte **signature matching** across the virtual filesystem plus a per-file
   **Shannon entropy** heuristic (packed/encrypted files get flagged), with quarantine.
 
@@ -88,8 +94,8 @@ signatures, crypto) instead of just reading labels.
 - A small floating robot that turns its head toward the player.
 - Click it, or use `buddy <question>`, for keyword-matched answers and low-level trivia.
 
-### 10. GPU shader screen (Vulkan / OpenGL nod)
-- A wall display running full fragment shaders: a raymarched SDF scene, a plasma and a Mandelbrot set.
+### 10. GPU shader TV (Vulkan / OpenGL nod)
+- A wall-mounted TV running full fragment shaders: a raymarched SDF scene, a plasma and a Mandelbrot set.
   Clicking switches the shader.
 
 ### 11. Game-dev corner (where it all started)
