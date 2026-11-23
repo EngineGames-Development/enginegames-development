@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Engine Room | EngineGames-Development</title>
+  <meta name="description" content="An interactive cartoon 3D room built with three.js out of EngineGames-Development's interests: OS dev, low-level, security, embedded, AI and game dev." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* cartoon page: the room sits in a chunky framed "stage" at the top, the story continues below it */
+    :root { --ink: #2b2340; --cream: #fff3dc; --red: #ef5a5a; --yellow: #ffcd3c; --blue: #4a7fe0; --green: #55c26b; --purple: #8a62e8; --sky: #9cc9ec; }
+    * { box-sizing: border-box; min-width: 0; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--ink); color: var(--cream); font: 17px/1.55 "Fredoka", "Trebuchet MS", system-ui, sans-serif; overflow-x: clip;
+      background-image: radial-gradient(rgba(255, 255, 255, .06) 2px, transparent 2.5px); background-size: 28px 28px; }
+    a { color: var(--yellow); }
+    code { font-family: "DejaVu Sans Mono", Consolas, monospace; font-size: .9em; color: #1d6b3a; background: #e3f6e5; padding: 1px 5px; border-radius: 6px; border: 2px solid #bfe6c5; overflow-wrap: anywhere; }
+    code.big { font-size: 1.15em; display: inline-block; margin: 6px 0; letter-spacing: 1px; user-select: all; }
+    kbd { display: inline-block; min-width: 30px; padding: 1px 8px; border: 2px solid var(--ink); border-bottom-width: 4px; border-radius: 8px; background: #fff; color: var(--ink); font-family: inherit; font-weight: 600; text-align: center; }
+
+    /* ---------- page header + hero */
+    .top { max-width: 1240px; margin: 0 auto; padding: 18px 20px 10px; display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: end; justify-content: space-between; }
+    .top h1 { margin: 0; font-size: clamp(34px, 5vw, 52px); line-height: 1.05; color: #fff; }
+    .top h1 span { color: var(--yellow); }
+    .top p { margin: 4px 0 0; color: #c9bfe6; font-size: 17px; }
+    .top nav { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 14px; border: 3px solid var(--ink); background: var(--yellow); color: var(--ink); box-shadow: 4px 4px 0 #120e22; font: 700 16px "Fredoka", sans-serif; text-decoration: none; cursor: pointer; min-height: 44px; }
+    .btn.alt { background: var(--cream); }
+    .btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+    /* ---------- the stage (3D room) */
+    .stage-wrap { max-width: 1240px; margin: 0 auto; padding: 8px 20px 0; }
+    #stage { position: relative; width: 100%; aspect-ratio: 16 / 9; max-height: 82vh; min-height: 300px; border-radius: 26px; overflow: hidden;
+      border: 5px solid #120e22; box-shadow: 0 0 0 6px var(--yellow), 10px 12px 0 6px #120e22; background: #2b2340; color: var(--ink); isolation: isolate; }
+    #stage:fullscreen, #stage.fs { width: 100vw; height: 100vh; max-height: none; aspect-ratio: auto; border-radius: 0; border: 0; box-shadow: none; }
+    #stage.fs { position: fixed; inset: 0; z-index: 100; }
+    #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    .stage-caption { margin: 18px 4px 0; color: #c9bfe6; font-size: 15px; text-align: center; }
+
+    .card, #info, #help, #panel, #tooltip, #focus-hint { background: var(--cream); color: var(--ink); border: 3px solid var(--ink); box-shadow: 5px 5px 0 var(--ink); }
+
+    #overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 14px; background: rgba(43, 35, 64, 0.45); cursor: pointer; z-index: 10; transition: opacity .3s; }
+    #overlay.hidden { opacity: 0; pointer-events: none; }
+    #overlay .card { max-width: 560px; padding: 22px 28px; border-radius: 24px; transform: rotate(-0.6deg); text-align: center; }
+    #overlay h2 { margin: 0 0 4px; font-size: clamp(26px, 3.4vw, 40px); line-height: 1.05; }
+    #overlay h2 span { color: var(--red); }
+    #overlay .sub { font-size: 16px; color: #5b4f7a; margin-bottom: 12px; }
+    #overlay .go { display: inline-block; padding: 11px 26px; border: 3px solid var(--ink); border-radius: 16px; background: var(--yellow); box-shadow: 4px 4px 0 var(--ink); font-weight: 700; font-size: 20px; animation: bob 1.4s ease-in-out infinite; }
+    #overlay .keys { margin-top: 12px; font-size: 14px; color: #5b4f7a; }
+    @keyframes bob { 50% { transform: translateY(-4px); } }
+    @media (prefers-reduced-motion: reduce) { #overlay .go { animation: none; } }
+
+    #fs-btn { position: absolute; right: 12px; top: 10px; z-index: 11; width: 44px; height: 44px; border-radius: 12px; border: 3px solid var(--ink); background: var(--cream); box-shadow: 3px 3px 0 var(--ink); cursor: pointer; display: grid; place-items: center; padding: 0; }
+    #fs-btn svg { width: 22px; height: 22px; }
+    #fs-btn:focus-visible { outline: 3px solid var(--yellow); }
+
+    #crosshair { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #fff; border: 3px solid var(--ink); pointer-events: none; z-index: 5; transition: transform .12s, background .12s; }
+    #crosshair.active { transform: scale(1.5); background: var(--yellow); }
+    #crosshair.hidden { display: none; }
+    #tooltip { position: absolute; left: 50%; top: calc(50% + 26px); transform: translateX(-50%); padding: 6px 14px; border-radius: 12px; box-shadow: 3px 3px 0 var(--ink); font-size: 16px; font-weight: 600; pointer-events: none; opacity: 0; transition: opacity .15s; z-index: 5; white-space: nowrap; }
+    #tooltip.show { opacity: 1; }
+
+    #info { position: absolute; left: 16px; bottom: 16px; max-width: min(520px, calc(100% - 32px)); padding: 12px 16px; border-radius: 18px; font-size: 15.5px; line-height: 1.45; opacity: 0; transform: translateY(14px) rotate(-0.5deg); transition: all .25s cubic-bezier(.3, 1.6, .5, 1); pointer-events: none; z-index: 6; }
+    #info.show { opacity: 1; transform: rotate(-0.5deg); }
+    #info h3 { margin: 0 0 4px; font-size: 18px; color: var(--purple); }
+
+    #stats, #hint { position: absolute; top: 12px; font-size: 13px; color: #fff; background: rgba(43, 35, 64, 0.6); padding: 3px 10px; border-radius: 10px; z-index: 5; pointer-events: none; }
+    #stats { left: 12px; }
+    #hint { right: 66px; }
+    #help { position: absolute; right: 12px; top: 62px; padding: 12px 16px; border-radius: 16px; font-size: 14.5px; line-height: 1.5; display: none; z-index: 6; max-height: calc(100% - 80px); overflow-y: auto; }
+    #help.show { display: block; }
+    #help b { color: var(--red); }
+
+    #focus-hint { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); padding: 8px 16px; border-radius: 14px; font-size: 15px; font-weight: 600; cursor: pointer; display: none; z-index: 6; max-width: calc(100% - 24px); text-align: center; }
+    #focus-hint.show { display: block; }
+    #focus-hint code { font-size: .85em; }
+
+    #panel { position: absolute; right: 12px; bottom: 12px; width: min(780px, calc(100% - 24px)); padding: 12px 14px; border-radius: 18px; font-size: 12.5px; display: none; z-index: 6; }
+    #panel.show { display: block; }
+    #panel header { display: flex; justify-content: space-between; gap: 12px; font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    #panel-close { cursor: pointer; color: var(--red); white-space: nowrap; }
+    #panel .row { display: grid; grid-template-columns: 36px 64px 110px 110px 46px 1fr; gap: 6px; padding: 2px 6px; margin-bottom: 2px; border-radius: 6px; white-space: nowrap; overflow: hidden; font-family: "DejaVu Sans Mono", Consolas, monospace; }
+    #panel .row span:last-child { overflow: hidden; text-overflow: ellipsis; }
+    #panel .p-TCP { background: #dfe8ff; } #panel .p-DNS { background: #ddf5e0; } #panel .p-ARP { background: #fff0c8; } #panel .p-ICMP { background: #eee2ff; } #panel .p-HTTP { background: #ffd6dc; }
+    #panel i { color: #2a8a46; font-style: normal; }
+    #panel-hex { margin: 8px 0 0; padding: 8px; border-radius: 10px; background: var(--ink); color: #c8f7d4; font-size: 11.5px; overflow-x: auto; max-height: 150px; }
+    table.sql { border-collapse: collapse; margin: 6px 0; font-size: 13px; }
+    table.sql th, table.sql td { border: 2px solid var(--ink); padding: 2px 8px; text-align: left; white-space: nowrap; }
+    table.sql th { background: var(--yellow); }
+
+    #quest-chip { position: absolute; left: 12px; top: 44px; z-index: 6; cursor: pointer; padding: 4px 12px; border-radius: 12px; background: var(--yellow); border: 3px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); font-weight: 700; font-size: 14px; }
+    #quest-chip kbd { min-width: 0; padding: 0 5px; font-size: 11px; border-width: 2px; border-bottom-width: 3px; }
+    #quest-list { position: absolute; left: 12px; top: 86px; width: min(370px, calc(100% - 24px)); max-height: calc(100% - 100px); overflow-y: auto; padding: 12px 14px; border-radius: 18px; z-index: 6; display: none; font-size: 14px; }
+    #quest-list.show { display: block; }
+    #quest-list h3 { margin: 0 0 6px; font-size: 18px; color: var(--purple); }
+    #quest-list .q { display: flex; gap: 10px; align-items: flex-start; padding: 5px 0; border-bottom: 2px dashed #e6d9bd; }
+    #quest-list .q:last-child { border-bottom: 0; }
+    #quest-list .q small { display: block; color: #6b6088; font-size: 12.5px; line-height: 1.35; }
+    #quest-list .box { flex: none; width: 22px; height: 22px; border: 3px solid var(--ink); border-radius: 7px; background: #fff; display: grid; place-items: center; font-weight: 700; color: #fff; }
+    #quest-list .done .box { background: var(--green); }
+    #quest-list .done b { text-decoration: line-through; text-decoration-thickness: 2px; color: #6b6088; }
+    #toast { position: absolute; left: 50%; top: 12px; z-index: 9; display: flex; gap: 12px; align-items: center; padding: 10px 18px; border-radius: 18px; background: var(--yellow); border: 3px solid var(--ink); box-shadow: 5px 5px 0 var(--ink); font-size: 17px; transform: translate(-50%, -160%); transition: transform .35s cubic-bezier(.3, 1.6, .5, 1); pointer-events: none; white-space: nowrap; }
+    #toast.show { transform: translate(-50%, 0); }
+    #toast .star { font-size: 30px; color: #fff; -webkit-text-stroke: 2px var(--ink); }
+    #toast small { display: block; font-size: 13px; color: #5b4f7a; }
+
+    #touch-ui { display: none; }
+    #touch-ui.show { display: block; }
+    #joy-base { position: absolute; width: 110px; height: 110px; margin: -55px 0 0 -55px; border-radius: 50%; border: 4px solid rgba(255, 255, 255, .8); background: rgba(43, 35, 64, .25); z-index: 7; pointer-events: none; display: none; }
+    #joy-base.show { display: block; }
+    #joy-knob { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; border-radius: 50%; background: var(--yellow); border: 3px solid var(--ink); transform: translate(-50%, -50%); }
+    #touch-use { position: absolute; right: 18px; bottom: 22px; z-index: 7; width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--ink); background: var(--yellow); box-shadow: 4px 4px 0 var(--ink); font: 700 19px "Fredoka", sans-serif; color: var(--ink); }
+    #touch-tip { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 7; font-size: 13px; color: #fff; background: rgba(43, 35, 64, .6); padding: 3px 10px; border-radius: 10px; pointer-events: none; white-space: nowrap; }
+    #touch-input { position: fixed; left: -9999px; top: 0; width: 10px; height: 10px; opacity: 0; }
+
+    /* small stages (phones, narrow windows): keep only the essentials */
+    #stage.small #stats, #stage.small #hint, #stage.small #overlay .keys, #stage.small #overlay .sub { display: none; }
+    #stage.small #quest-chip { top: 10px; }
+    #stage.small #quest-list { top: 52px; }
+    #stage.small #overlay .card { padding: 14px 18px; }
+    #stage.small #info { font-size: 13.5px; bottom: 100px; }
+
+    /* ---------- text below the room */
+    .content { max-width: 1240px; margin: 0 auto; padding: 40px 20px 60px; display: grid; gap: 28px; }
+    .band { background: var(--cream); color: var(--ink); border: 4px solid #120e22; border-radius: 26px; box-shadow: 8px 8px 0 #120e22; padding: clamp(20px, 3vw, 34px); }
+    .band h2 { margin: 0 0 10px; font-size: clamp(26px, 3vw, 36px); line-height: 1.1; }
+    .band p { margin: 0 0 12px; max-width: 70ch; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); gap: 16px; margin-top: 16px; }
+    .feat { border: 3px solid var(--ink); border-radius: 18px; padding: 14px 16px; background: #fff; }
+    .feat h3 { margin: 0 0 4px; font-size: 19px; display: flex; gap: 10px; align-items: center; }
+    .feat h3 i { width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--ink); flex: none; }
+    .feat p { margin: 0; font-size: 15.5px; color: #4a4064; }
+    .controls { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; align-items: center; margin-top: 10px; }
+    .projects { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 12px; margin-top: 12px; }
+    .projects a { display: block; padding: 12px 14px; border: 3px solid var(--ink); border-radius: 16px; background: #fff; color: var(--ink); text-decoration: none; }
+    .projects a b { display: block; font-size: 18px; }
+    .projects a small { color: #5b4f7a; }
+    .projects a:hover, .projects a:focus-visible { background: var(--yellow); }
+    footer { text-align: center; color: #c9bfe6; font-size: 15px; }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1>The Engine <span>Room</span></h1>
+      <p>My interests, built as a cartoon 3D room you can walk around in.</p>
+    </div>
+    <nav>
+      <button class="btn" id="fs-top" type="button">Play fullscreen</button>
+      <a class="btn alt" href="https://github.com/EngineGames-Development">GitHub profile</a>
+    </nav>
+  </header>
+
+  <div class="stage-wrap">
+    <div id="stage">
+      <div id="overlay">
+        <div class="card">
+          <h2>The Engine <span>Room</span></h2>
+          <div class="sub">OS dev · low-level · security · embedded · AI · game dev</div>
+          <span class="go">Click to enter</span>
+          <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk · mouse look · <kbd>E</kbd> use · <kbd>Q</kbd> quests · <kbd>F</kbd> fullscreen</div>
+        </div>
+      </div>
+      <button id="fs-btn" type="button" aria-label="Toggle fullscreen" title="Fullscreen (F)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2b2340" stroke-width="3" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>
+      </button>
+      <div id="crosshair"></div>
+      <div id="tooltip"></div>
+      <div id="info"></div>
+      <div id="stats"></div>
+      <div id="hint">H help · M sound</div>
+      <div id="quest-chip"></div>
+      <div id="quest-list" class="card"></div>
+      <div id="toast"></div>
+      <div id="touch-ui">
+        <div id="joy-base"><div id="joy-knob"></div></div>
+        <button id="touch-use" type="button">USE</button>
+        <div id="touch-tip">left thumb: walk · right thumb: look · tap objects</div>
+      </div>
+      <div id="help">
+        <b>Things to try</b> (also <kbd>Q</kbd> quests)<br/>
+        CRT monitor: SecureRustOS shell + EG-8 CPU<br/>
+        Laptop: crack the crackme · Scoreboard: CTF flags<br/>
+        Easel: neural net learns XOR · Printer by the TV<br/>
+        Arcade: Packet Catcher · LED matrix above the bench<br/>
+        Bench: oscilloscope, robot arm, soldering station<br/>
+        Build PC: <code>make run</code> · Filing cabinet: SQL<br/>
+        Corkboard: my projects · Whiteboard: memory map<br/>
+        Arduino / Pi / LEDs · RAM board · lava-lamp RNG<br/>
+        Server + shark: packet capture · Telescope: nmap<br/>
+        Virus jar: antivirus · Safe: password vault<br/>
+        TV: GPU shaders · Tux: jokes · Robot: EngineBuddy<br/>
+        Cat, duck, drone, bricks, books · Switch: day/night
+      </div>
+      <div id="focus-hint">Typing into SecureRustOS · press <b>Esc</b> (or click here) to stand up</div>
+      <div id="panel">
+        <header><span>● nic0 live capture: Ethernet / IPv4 / TCP · UDP · ICMP · ARP (built byte by byte)</span><span id="panel-close">✕ close</span></header>
+        <div id="panel-list"></div>
+        <pre id="panel-hex"></pre>
+      </div>
+    </div>
+    <p class="stage-caption">Click the room to step inside. The fullscreen button is in the top-right corner (or press <kbd>F</kbd>).</p>
+  </div>
+  <input id="touch-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-hidden="true" />
+
+  <main class="content">
+    <section class="band" id="about">
+      <h2>Hi, I'm EngineGames-Development</h2>
+      <p>I started as a Roblox and game developer. Over time I got into fullstack, cybersecurity, operating systems, AI and embedded systems. I have a passion for low-level programming, which started when I began building my own experimental operating system in Rust and C.</p>
+      <p>Instead of a list of interests, here is a room full of them. Almost every object in it does something real: a working 8-bit CPU, a crackme to reverse, packets built byte by byte, randomness harvested from a lava lamp.</p>
+    </section>
+
+    <section class="band" id="inside">
+      <h2>What's inside the room</h2>
+      <div class="grid">
+        <div class="feat"><h3><i style="background:#55c26b"></i>EG-8 CPU</h3><p>An 8-bit CPU emulator with an assembler and disassembler. It drives LEDs, a robot arm, an LED matrix, an oscilloscope and a live RAM board.</p></div>
+        <div class="feat"><h3><i style="background:#4a7fe0"></i>SecureRustOS shell</h3><p>A terminal on a CRT with a boot sequence, a GDT encoder, a memory map, <code>make run</code>, SQL and MongoDB queries and Linux easter eggs.</p></div>
+        <div class="feat"><h3><i style="background:#ef5a5a"></i>Security &amp; reversing</h3><p>A Ghidra-style crackme, a 5-flag CTF, packet capture with real IPv4 checksums, an antivirus scan, and nmap through a telescope.</p></div>
+        <div class="feat"><h3><i style="background:#ffcd3c"></i>Embedded &amp; maker</h3><p>An Arduino, a Raspberry Pi, a breadboard, a soldering station that heats up, a 3D printer and a quadcopter drone.</p></div>
+        <div class="feat"><h3><i style="background:#8a62e8"></i>AI lab</h3><p>A real neural network trains live on an easel and learns XOR with backpropagation. EngineBuddy floats around giving hints.</p></div>
+        <div class="feat"><h3><i style="background:#ff9b3d"></i>Game dev</h3><p>Packet Catcher, a small original arcade game, plus a brick table where it all started, and 19 quests to complete.</p></div>
+        <div class="feat"><h3><i style="background:#2fbfa8"></i>Graphics</h3><p>Toon shading with ink outlines, plus fragment shaders: a raymarched SDF, plasma, a Mandelbrot set, a CRT effect and lava-lamp metaballs.</p></div>
+        <div class="feat"><h3><i style="background:#ff8fb1"></i>Entropy &amp; crypto</h3><p>The lava lamp is an optical RNG (von Neumann debiasing + SHA-256) that feeds the password vault and the CPU.</p></div>
+      </div>
+    </section>
+
+    <section class="band" id="controls">
+      <h2>Controls</h2>
+      <div class="controls">
+        <span><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></span><span>walk (Shift = faster)</span>
+        <span><kbd>Mouse</kbd></span><span>look around (or drag)</span>
+        <span><kbd>E</kbd> / click</span><span>use the object under the crosshair</span>
+        <span><kbd>Esc</kbd></span><span>stand up from the terminal or arcade, pause</span>
+        <span><kbd>Q</kbd> <kbd>H</kbd> <kbd>M</kbd> <kbd>F</kbd></span><span>quests · help · sound · fullscreen</span>
+        <span>Phone</span><span>left thumb walks, right thumb looks, tap objects to use them</span>
+      </div>
+      <p style="margin-top:14px">Tip: start at the CRT monitor and type <code>help</code>, or ask the robot for a hint with <code>buddy hint</code>.</p>
+    </section>
+
+    <section class="band" id="projects">
+      <h2>My projects</h2>
+      <div class="projects">
+        <a href="https://github.com/EngineGames-Development/SecureRustOS"><b>SecureRustOS</b><small>My new OS in Rust: bootloader, kernel, drivers (coming up)</small></a>
+        <a href="https://github.com/EngineGames-Development/SecureOS"><b>SecureOS</b><small>Experimental x86_32 OS in C, Rust and x86 Assembly</small></a>
+        <a href="https://github.com/EngineGames-Development/EngineManager"><b>EngineManager</b><small>My own password manager (work in progress)</small></a>
+        <a href="https://github.com/EngineGames-Development/EngineBuddy"><b>EngineBuddy</b><small>An AI desktop companion</small></a>
+        <a href="https://github.com/EngineGames-Development/Engine-s-Antivirus"><b>Engine's Antivirus</b><small>Educational antivirus in Python and Rust</small></a>
+        <a href="https://github.com/EngineGames-Development/Hybrid-Entropy-Computing-Platform"><b>Hybrid-Entropy-Computing-Platform</b><small>Optical entropy generation and randomness (C++, Python)</small></a>
+      </div>
+    </section>
+
+    <footer>Built with three.js, toon shaders and a lot of <code>0xC0FFEE</code>. · <a href="https://github.com/EngineGames-Development/enginegames-development/tree/main/room">Source code</a></footer>
+  </main>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

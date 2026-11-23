@@ -8,6 +8,29 @@ I also have a passion for low-level programming, which started when I began buil
 
 ---
 
+# The Engine Room
+
+<p align="center">
+  <a href="https://enginegames-development.github.io/enginegames-development/room/">
+    <img src="room/preview.gif" alt="The Engine Room: an animated tour of a cartoon 3D room built with three.js" width="100%" />
+  </a>
+</p>
+
+<p align="center">
+  <b><a href="https://enginegames-development.github.io/enginegames-development/room/">&#9654; Enter the room</a></b>
+  &nbsp;·&nbsp; plays in the browser, with a fullscreen button &nbsp;·&nbsp;
+  <a href="room">source</a> &nbsp;·&nbsp; <a href="Prompt.MD">design prompt</a>
+</p>
+
+An interactive cartoon 3D room built with **three.js**, made out of my interests. Walk around with `WASD` + mouse (or touch on a phone) and use things with `E`:
+
+* **A real 8-bit CPU (EG-8)** with an assembler and disassembler. It drives LEDs, a robot arm, an LED matrix, an oscilloscope and a live RAM board
+* **SecureRustOS terminal** on a CRT: boot sequence, GDT encoder, memory map, `make run`, SQL / MongoDB queries and Linux easter eggs
+* **Security & reversing:** a Ghidra-style crackme, a 5-flag CTF, packet capture with real IPv4 checksums, an antivirus scan and nmap
+* **Embedded, AI & game dev:** a soldering station, a 3D printer, a drone, a neural net that learns XOR live, a Packet Catcher arcade game, Tux jokes and 19 quests
+
+---
+
 # What I'm Working On
 
 * **Fullstack:** Building my own password manager (work in progress): [EngineManager](https://github.com/EngineGames-Development/EngineManager),
