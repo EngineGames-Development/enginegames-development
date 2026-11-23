@@ -491,23 +491,54 @@ box(0.2, 0.006, 0.17, mat(C.purple), 0.3, deskTopY + 0.003, -3.12, scene, 0.003)
 const mouseDev = ball(0.03, beige, 0.3, deskTopY + 0.015, -3.12, scene, 16);
 mouseDev.scale.set(0.9, 0.55, 1.4);
 
-// coffee mug with steam
+// coffee mug: hollow (outer + inner wall, bottom, rounded rim), coffee sunk below the rim so no faces overlap
 const mug = new THREE.Group();
 mug.position.set(0.5, deskTopY, -3.0);
 scene.add(mug);
-cyl(0.045, 0.04, 0.11, mat(C.red), 0, 0.055, 0, mug);
-cyl(0.046, 0.046, 0.02, mat(0xffffff), 0, 0.07, 0, mug);
-cyl(0.04, 0.04, 0.004, mat(0x5a3418, { outline: false }), 0, 0.108, 0, mug);
-const handle = new THREE.Mesh(new THREE.TorusGeometry(0.028, 0.009, 8, 16), mat(C.red));
-handle.position.set(0.05, 0.055, 0);
+const mugRed = mat(C.red);
+const mugOuter = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.11, 32, 1, true), mugRed);
+mugOuter.position.y = 0.055;
+mugOuter.castShadow = true;
+mug.add(mugOuter);
+const mugInner = new THREE.Mesh(new THREE.CylinderGeometry(0.0395, 0.035, 0.104, 32, 1, true), mat(0xf6e3cf, { side: THREE.BackSide, outline: false }));
+mugInner.position.y = 0.058;
+mug.add(mugInner);
+cyl(0.04, 0.04, 0.008, mugRed, 0, 0.004, 0, mug, 32); // bottom
+const mugRim = new THREE.Mesh(new THREE.TorusGeometry(0.0423, 0.0035, 8, 40), mugRed);
+mugRim.rotation.x = Math.PI / 2;
+mugRim.position.y = 0.11;
+mug.add(mugRim);
+const band = new THREE.Mesh(new THREE.CylinderGeometry(0.0448, 0.0444, 0.02, 32, 1, true), mat(0xffffff, { outline: false }));
+band.position.y = 0.075;
+mug.add(band);
+const latte = canvasTexture(128, 128, (g, W, H) => {
+  g.fillStyle = '#6b3b1c'; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#8a5530'; g.beginPath(); g.arc(W / 2, H / 2, 54, 0, Math.PI * 2); g.fill();
+  g.fillStyle = '#f4dcb8'; // latte-art heart
+  g.beginPath(); g.moveTo(64, 92); g.bezierCurveTo(22, 64, 34, 30, 64, 50); g.bezierCurveTo(94, 30, 106, 64, 64, 92); g.fill();
+});
+const coffee = new THREE.Mesh(new THREE.CircleGeometry(0.0385, 32), mat(0xffffff, { map: latte, outline: false }));
+coffee.rotation.x = -Math.PI / 2;
+coffee.position.y = 0.092; // 18 mm below the rim
+mug.add(coffee);
+const handle = new THREE.Mesh(new THREE.TorusGeometry(0.026, 0.008, 10, 20, Math.PI * 1.3), mugRed);
+handle.position.set(0.047, 0.058, 0);
+handle.rotation.z = -Math.PI * 0.65;
 mug.add(handle);
-const steamMat = new THREE.MeshToonMaterial({ color: 0xffffff, transparent: true, opacity: 0.7, gradientMap });
-steamMat.userData = { ...noOutline };
-const steam = [0, 1, 2].map((i) => ball(0.018 + i * 0.004, steamMat, 0, 0.15 + i * 0.05, 0, mug, 10));
-animated.push((t) => steam.forEach((s, i) => {
-  const k = (t * 0.5 + i / 3) % 1;
-  s.position.set(Math.sin(t * 2 + i) * 0.012, 0.12 + k * 0.16, 0);
-  s.scale.setScalar(0.6 + k * 0.8);
+// soft steam wisps that rise from inside the cup and fade out
+const steam = [0, 1, 2].map((i) => {
+  const m = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false });
+  m.userData = { ...noOutline };
+  const w = ball(0.012, m, 0, 0.1, 0, mug, 10);
+  w.castShadow = false;
+  w.userData.noHit = true;
+  return w;
+});
+animated.push((t) => steam.forEach((w, i) => {
+  const k = (t * 0.35 + i / 3) % 1;
+  w.position.set(Math.sin(t * 1.7 + i * 2) * 0.012 * k, 0.1 + k * 0.17, Math.cos(t * 1.3 + i) * 0.008 * k);
+  w.scale.set(0.8 + k * 1.6, 1.2 + k * 2.2, 0.8 + k * 1.6);
+  w.material.opacity = Math.sin(k * Math.PI) * 0.45;
 }));
 interact(mug, '0xC0FFEE', () => showInfo('Mug', 'Contents: <code>0xC0FFEE</code>. Required to fix triple faults at 3 AM.'));
 
