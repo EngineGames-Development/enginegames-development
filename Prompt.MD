@@ -14,7 +14,7 @@ signatures, crypto) instead of just reading labels.
 ## Technical constraints
 
 - Plain HTML + ES modules, with no build step. three.js loads from a CDN through an import map.
-- Runs from any static web server (for example `python3 -m http.server`) or GitHub Pages.
+- Runs from any static web server (for example `python3 -m http.server`), or straight from the GitHub repo through raw.githack (no GitHub Pages).
 - Keep the code modular: one module per subsystem (CPU, terminal, network, entropy, shaders, scene).
 - Aim for 60 FPS on a mid-range laptop: instanced meshes, few dynamic lights, small render targets.
 - Visual style: **cartoony and cheerful**, like a cozy animated-movie bedroom workshop:
@@ -140,7 +140,7 @@ signatures, crypto) instead of just reading labels.
   tap left/right to play the arcade.
 - **Pet the cat** (wakes up, purrs, hearts float up), a **rubber debugging duck** on the CRT, and a **quadcopter drone** that flies
   a lap around the room from its landing pad (`drone`).
-- README section with an animated GIF tour linking to the GitHub Pages build (`room/` is served as-is thanks to `.nojekyll`).
+- README section with an animated GIF tour linking to the room served straight from the repo's `main` branch via raw.githack (no GitHub Pages needed).
 - The page shows the room in a framed 16:9 stage with the text (about, features, controls, projects) below it, plus a fullscreen button (`F`).
 
 ## Deliverables

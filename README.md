@@ -11,14 +11,14 @@ I also have a passion for low-level programming, which started when I began buil
 # The Engine Room
 
 <p align="center">
-  <a href="https://enginegames-development.github.io/enginegames-development/room/">
+  <a href="https://raw.githack.com/EngineGames-Development/enginegames-development/main/room/index.html">
     <img src="room/preview.gif" alt="The Engine Room: an animated tour of a cartoon 3D room built with three.js" width="100%" />
   </a>
 </p>
 
 <p align="center">
-  <b><a href="https://enginegames-development.github.io/enginegames-development/room/">&#9654; Enter the room</a></b>
-  &nbsp;·&nbsp; plays in the browser, with a fullscreen button &nbsp;·&nbsp;
+  <b><a href="https://raw.githack.com/EngineGames-Development/enginegames-development/main/room/index.html">&#9654; Enter the room</a></b>
+  &nbsp;·&nbsp; runs right in your browser, no install, with a fullscreen button &nbsp;·&nbsp;
   <a href="room">source</a> &nbsp;·&nbsp; <a href="Prompt.MD">design prompt</a>
 </p>
 
